@@ -1,0 +1,2621 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Order Gelora Medika v50 (Anti-Bisu)</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; transition: background 0.2s, color 0.2s; }
+    
+    body.dark-mode { 
+      --bg: #090d16; --card: #131c31; --border: #2c3e50; --text: #f8fafc; --muted: #a0aec0; 
+      --neon-cyan: #00d2ff; --neon-pink: #ff3366; --neon-green: #00e676; --neon-yellow: #ffea00; --accent: #6366f1;
+      --table-odd: #111b33; --table-even: #1a2744; --table-hover: #22345e;
+    }
+    body.light-mode { 
+      --bg: #f1f5f9; --card: #ffffff; --border: #cbd5e1; --text: #0f172a; --muted: #64748b; 
+      --neon-cyan: #0284c7; --neon-pink: #e11d48; --neon-green: #16a34a; --neon-yellow: #ca8a04; --accent: #4f46e5;
+      --table-odd: #f8fafc; --table-even: #f1f5f9; --table-hover: #e2e8f0;
+    }
+
+    body { background-color: var(--bg); color: var(--text); padding-bottom: 75px; min-height: 100vh; }
+    
+    .header { 
+      padding: 12px 16px; background: var(--card); backdrop-filter: blur(10px); 
+      position: sticky; top: 0; z-index: 10; border-bottom: 2px solid var(--neon-cyan); 
+      display: flex; justify-content: space-between; align-items: center; 
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .back-btn { 
+      background: rgba(0, 210, 255, 0.15); border: 1px solid var(--neon-cyan); color: var(--neon-cyan); 
+      width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; 
+      font-size: 1rem; cursor: pointer; font-weight: bold;
+    }
+    .header h1 { font-size: 0.95rem; font-weight: 800; color: var(--text); text-transform: uppercase; letter-spacing: 0.8px; }
+    .header-right { display: flex; align-items: center; gap: 6px; }
+    .header span { font-size: 0.68rem; background: rgba(0, 230, 118, 0.2); color: var(--neon-green); padding: 3px 8px; border-radius: 6px; font-weight: 700; border: 1px solid rgba(0, 230, 118, 0.5); }
+    .theme-toggle { background: transparent; border: 1px solid var(--border); color: var(--text); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+
+    .container { padding: 12px; display: none; }
+    .container.active { display: block; animation: fadeIn 0.15s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .card-title { font-size: 0.78rem; color: var(--neon-cyan); text-transform: uppercase; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.5px; }
+
+    .form-group { margin-bottom: 10px; position: relative; }
+    label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 4px; font-weight: 700; }
+    input, select, textarea { width: 100%; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.85rem; outline: none; }
+    input:focus, select:focus, textarea:focus { border-color: var(--neon-cyan); box-shadow: 0 0 10px rgba(0, 210, 255, 0.3); }
+    input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--neon-cyan); }
+    
+    .search-results { position: absolute; top: 100%; left: 0; right: 0; background: var(--card); border: 1px solid var(--neon-cyan); border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 50; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+    .search-item { padding: 10px 12px; border-bottom: 1px solid var(--border); cursor: pointer; }
+    .search-item:hover { background: rgba(0, 210, 255, 0.1); }
+    .search-item-title { font-weight: 700; font-size: 0.85rem; color: var(--text); }
+    .search-item-sub { font-size: 0.72rem; color: var(--muted); }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+
+    .calc-box { background: var(--bg); border: 1px dashed var(--neon-cyan); border-radius: 8px; padding: 10px; margin-top: 8px; }
+    .calc-row { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 4px; color: var(--text); }
+    .calc-row.highlight { font-weight: 800; font-size: 1rem; color: var(--neon-green); border-top: 1px solid var(--border); padding-top: 6px; margin-top: 4px; }
+
+    .supplier-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px; position: relative; overflow: hidden; }
+    .supplier-card.best { border-color: var(--neon-green); background: rgba(0, 230, 118, 0.08); box-shadow: 0 0 12px rgba(0, 230, 118, 0.15); }
+    .supplier-card.empty { border-color: rgba(255, 51, 102, 0.4); background: rgba(255, 51, 102, 0.05); opacity: 0.85; }
+    
+    .mapping-box { background: rgba(128,128,128,0.05); border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin: 6px 0; }
+    .pbf-name-tag { font-size: 0.8rem; font-weight: 800; color: var(--neon-cyan); text-transform: uppercase; margin-bottom: 2px; }
+    .pbf-item-title { font-size: 0.88rem; font-weight: 700; color: var(--text); }
+    
+    .badge { display: inline-block; font-size: 0.62rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; }
+    .badge-fast { background: var(--neon-pink); color: #fff; }
+    .badge-medium { background: var(--neon-yellow); color: #000; }
+    .badge-slow { background: var(--neon-cyan); color: #000; }
+    .badge-best { background: var(--neon-green); color: #000; }
+    .badge-secondary { background: var(--border); color: var(--muted); }
+    .badge-danger { background: var(--neon-pink); color: #fff; }
+    .badge-golongan { background: rgba(99, 102, 241, 0.2); color: var(--accent); border: 1px solid var(--accent); }
+    
+    .status-pending { background: rgba(255, 234, 0, 0.2); color: var(--neon-yellow); border: 1px solid var(--neon-yellow); }
+    .status-received { background: rgba(0, 230, 118, 0.2); color: var(--neon-green); border: 1px solid var(--neon-green); }
+    .status-canceled { background: rgba(255, 51, 102, 0.2); color: var(--neon-pink); border: 1px solid var(--neon-pink); text-decoration: line-through; }
+    .status-discontinued { background: rgba(255, 51, 102, 0.1); color: var(--neon-pink); border: 1px dashed var(--neon-pink); }
+    
+    .status-paid { background: rgba(0, 230, 118, 0.2); color: var(--neon-green); border: 1px solid var(--neon-green); }
+    .status-unpaid { background: rgba(255, 51, 102, 0.2); color: var(--neon-pink); border: 1px solid var(--neon-pink); }
+    .status-partial { background: rgba(255, 234, 0, 0.2); color: var(--neon-yellow); border: 1px solid var(--neon-yellow); }
+
+    .alert-board { background: rgba(255, 51, 102, 0.1); border: 1px solid var(--neon-pink); border-radius: 12px; padding: 10px; margin-bottom: 12px; display: none; }
+    .alert-header { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.88rem; color: var(--neon-pink); margin-bottom: 8px; }
+    .alert-list { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+    .alert-item { min-width: 165px; background: var(--bg); border: 1px solid rgba(255,51,102,0.5); border-radius: 8px; padding: 8px; font-size: 0.75rem; cursor: pointer; }
+    .alert-item.routine { border-color: rgba(0, 210, 255, 0.5); background: rgba(0, 210, 255, 0.05); }
+    .alert-item strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+
+    .instruction-box { background: rgba(255, 234, 0, 0.08); border: 1px solid var(--neon-yellow); border-radius: 8px; padding: 10px; font-size: 0.75rem; color: var(--text); margin-bottom: 10px; line-height: 1.4; }
+
+    .btn { width: 100%; padding: 10px; border: none; border-radius: 8px; background: var(--accent); color: white; font-weight: 800; font-size: 0.85rem; cursor: pointer; margin-top: 6px; box-shadow: 0 0 10px rgba(99, 102, 241, 0.3); }
+    .btn-success { background: var(--neon-green); color: #000; box-shadow: 0 0 10px rgba(0, 230, 118, 0.3); }
+    .btn-danger { background: var(--neon-pink); color: #fff; box-shadow: 0 0 10px rgba(255, 51, 102, 0.3); }
+    .btn-wa { background: #25D366; color: #fff; box-shadow: 0 0 10px rgba(37, 211, 102, 0.3); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); box-shadow: none;}
+    .btn-outline-danger { background: transparent; border: 1px solid var(--neon-pink); color: var(--neon-pink); box-shadow: none;}
+    .btn-outline-success { background: transparent; border: 1px solid var(--neon-green); color: var(--neon-green); box-shadow: none;}
+    .btn-small { padding: 5px 8px; font-size: 0.72rem; border-radius: 6px; width: auto; }
+    
+    .po-group { border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 10px; background: var(--bg); }
+    .po-header { font-weight: 800; font-size: 0.88rem; color: var(--neon-cyan); margin-bottom: 6px; border-bottom: 1px solid var(--border); padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
+    .po-line { font-size: 0.82rem; padding: 8px 0; border-bottom: 1px dashed var(--border); }
+    .qty-input { width: 60px; padding: 4px 6px; background: var(--card); border: 1px solid var(--neon-cyan); border-radius: 4px; color: var(--text); font-size: 0.88rem; text-align: center; margin-right: 6px; }
+
+    .table-container { max-height: 450px; overflow-y: auto; margin-top: 8px; border: none; border-radius: 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    th, td { padding: 10px 8px; text-align: left; border-bottom: 2px solid var(--border); border-left: none !important; border-right: none !important; }
+    th { position: sticky; top: 0; background: var(--card); color: var(--neon-cyan); font-weight: 800; z-index: 5; border-bottom: 3px solid var(--neon-cyan); }
+    
+    #mapping-table tr:nth-child(odd) td { background-color: var(--table-odd); color: var(--text); }
+    #mapping-table tr:nth-child(even) td { background-color: var(--table-even); color: var(--text); }
+    #mapping-table tr:hover td { background-color: var(--table-hover); }
+
+    .pagination-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding: 6px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); font-size: 0.78rem; }
+
+    .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 200; display: none; align-items: center; justify-content: center; padding: 14px; backdrop-filter: blur(4px); }
+    .modal-content { background: var(--card); border: 2px solid var(--neon-cyan); border-radius: 12px; padding: 16px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 0 30px rgba(0, 210, 255, 0.2); }
+
+    #loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg); opacity: 0.95; z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .neon-spinner { width: 50px; height: 50px; border: 3px solid rgba(0, 210, 255, 0.2); border-top: 3px solid var(--neon-cyan); border-radius: 50%; animation: spin 0.8s linear infinite; box-shadow: 0 0 15px var(--neon-cyan); }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 56px; background: var(--card); border-top: 2px solid var(--border); display: flex; justify-content: space-between; align-items: center; z-index: 100; box-shadow: 0 -4px 15px rgba(0,0,0,0.2); padding: 0 2px;}
+    .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--muted); font-size: 0.58rem; font-weight: 700; width: 14.2%; cursor: pointer; text-align:center;}
+    .nav-item.active { color: var(--neon-cyan); text-shadow: 0 0 10px rgba(0, 210, 255, 0.5); }
+    .nav-icon { font-size: 1rem; margin-bottom: 2px; }
+
+    .subnav-tabs { display: flex; gap: 4px; margin-bottom: 12px; background: var(--bg); padding: 4px; border-radius: 8px; border: 1px solid var(--border); }
+    .subnav-btn { flex: 1; padding: 8px; background: transparent; border: none; border-radius: 6px; color: var(--muted); font-size: 0.75rem; font-weight: 800; cursor: pointer; text-align: center; }
+    .subnav-btn.active { background: var(--accent); color: #fff; box-shadow: 0 0 10px rgba(99, 102, 241, 0.4); }
+    .sub-section { display: none; }
+    .sub-section.active { display: block; }
+    .chart-container { position: relative; width: 100%; height: 220px; margin-top: 10px; }
+  </style>
+</head>
+<body class="dark-mode">
+
+  <div id="loading-overlay">
+    <div class="neon-spinner"></div>
+    <div style="margin-top: 15px; font-weight: 800; color: var(--neon-cyan); letter-spacing: 1px;" id="loading-text">MEMUAT APLIKASI v50...</div>
+  </div>
+
+  <div class="header">
+    <div class="header-left">
+      <div class="back-btn" onclick="goBackTab()" title="Kembali">⬅</div>
+      <h1>Gelora Medika</h1>
+    </div>
+    <div class="header-right">
+      <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="Ganti Tema">☀️</button>
+      <span>v50</span>
+    </div>
+  </div>
+
+  <!-- TAB 1: CARI & HITUNG ORDER -->
+  <div id="tab-order" class="container active">
+    <div id="alert-board" class="alert-board">
+      <div class="alert-header">
+        <span id="alert-title">⚠️ Peringatan Sistem</span>
+        <span style="font-size:0.72rem;" id="alert-subtitle">Cek Stok!</span>
+      </div>
+      <div class="alert-list" id="alert-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">1. Cari Produk Sistem Apotek</div>
+      <div class="form-group">
+        <input type="text" id="search-input" placeholder="Ketik nama obat standar apotek..." oninput="onSearchInput()">
+        <div id="search-results" class="search-results"></div>
+      </div>
+
+      <div style="font-weight:800; font-size:1rem; color:var(--text); margin-bottom:2px;" id="selected-prod-title">Silakan cari & pilih produk</div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center; flex-wrap:wrap; gap:4px;">
+        <span style="font-size:0.78rem; color:var(--muted);" id="selected-prod-unit">Satuan Dasar: -</span>
+        <div style="display:flex; gap:4px;">
+          <span id="selected-prod-category"></span>
+          <span id="selected-prod-golongan"></span>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="form-group">
+          <label id="stock-label">Stok Aktual</label>
+          <input type="number" id="current-stock" value="0" min="0" oninput="calculateOrder()">
+        </div>
+        <div class="form-group"><label>Target (Hari)</label><input type="number" id="target-days" value="20" oninput="calculateOrder()"></div>
+        <div class="form-group"><label>Cuti/Libur</label><input type="number" id="leave-days" value="0" oninput="calculateOrder()"></div>
+      </div>
+
+      <div class="calc-box">
+        <div class="calc-row"><span>Rata-rata Keluar (ADC):</span><strong id="val-adc">0 /hari</strong></div>
+        <div class="calc-row"><span>Stok Keamanan (Safety):</span><strong id="val-safety" style="color:var(--neon-yellow);">0</strong></div>
+        <div class="calc-row highlight"><span>Rekomendasi Qty Order:</span><strong id="val-qty-order">0</strong></div>
+      </div>
+      
+      <button class="btn btn-outline" style="border-color:var(--neon-cyan); color:var(--neon-cyan); padding:8px; margin-top:8px; font-size:0.78rem;" onclick="saveStockToMemory()">
+        📥 Simpan Sisa Stok Ini (Catat Tanggal Cek)
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">2. Pilih PBF (Termurah / Stok PBF)</div>
+      <div id="supplier-matrix"><p style="color:var(--muted); font-size:0.8rem;">Pilih produk terlebih dahulu.</p></div>
+    </div>
+  </div>
+
+  <!-- TAB 2: UPDATE DATA -->
+  <div id="tab-sync" class="container">
+    <div class="card">
+      <div class="card-title">1. Panduan & Instruksi Format Impor</div>
+      <div class="instruction-box">
+        <b>💡 Ketentuan File Excel / CSV / PDF:</b><br>
+        • Pastikan baris header tabel Anda memiliki kolom: <b>Nama Barang</b>, <b>Satuan/Kemasan</b>, dan <b>Harga</b>.<br>
+        • Sertakan kolom <b>Stok</b> jika ada agar stok PBF terpantau akurat.<br>
+        • ⚠️ Obat berstatus <i>Discontinue</i> otomatis diabaikan saat impor.
+      </div>
+
+      <div class="card-title" style="margin-top:12px;">Upload File PBF</div>
+      <div class="form-group"><label>PBF Target Update</label><select id="sync-pbf-name"></select></div>
+      <div style="display:flex; gap:8px; margin-bottom:10px;">
+        <button class="btn btn-outline btn-small" style="flex:1; margin-top:0;" onclick="promptAddPBF()">+ Tambah PBF Baru</button>
+        <button class="btn btn-outline btn-small" style="flex:1; margin-top:0; border-color:var(--neon-yellow); color:var(--neon-yellow);" onclick="promptEditPBFName()">✏️ Edit Nama PBF</button>
+      </div>
+      
+      <div class="form-group">
+        <label>Tipe Harga</label>
+        <select id="sync-price-type" onchange="toggleDiscountInputs()">
+          <option value="HPP">Harga Jadi / HPP / Nett</option>
+          <option value="HNA_DISC">HNA Mentah (+ Diskon)</option>
+        </select>
+      </div>
+      <div id="disc-input-box" class="grid-2" style="display:none; margin-bottom:10px;">
+        <div class="form-group"><label>Diskon Dasar 1 (%)</label><input type="number" id="sync-disc1" value="0"></div>
+        <div class="form-group"><label>Diskon Dasar 2 (%)</label><input type="number" id="sync-disc2" value="0"></div>
+      </div>
+
+      <div class="form-group"><input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv, .pdf"></div>
+      <button class="btn" onclick="processGenericUpload()">📥 Impor File (Excel/CSV/PDF)</button>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">2. Paste Teks PDF / WhatsApp</div>
+      <div class="instruction-box">
+        • Format teks baris: <b>[Nama Barang] [Harga Angka]</b> (Contoh: <i>PARACETAMOL 500MG 15000</i>).
+      </div>
+      <div class="form-group"><textarea id="paste-text-input" rows="4" placeholder="Tempelkan teks tabel harga di sini..."></textarea></div>
+      <button class="btn" onclick="processTextPaste()">📋 Impor dari Teks/Paste</button>
+    </div>
+  </div>
+
+  <!-- TAB 3: DRAFT PO -->
+  <div id="tab-po" class="container">
+    <div class="card">
+      <div class="card-title">Draft PO & Edit Kuantitas</div>
+      <div id="po-list"></div>
+      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+        <button class="btn btn-wa" style="flex:1; margin-top:0;" onclick="sendWhatsAppPO()">📲 Buka WA</button>
+        <button class="btn btn-outline" style="flex:1; margin-top:0; border-color:#fbbc04; color:#fbbc04;" onclick="sendToKeep()">📝 Keep</button>
+        <button class="btn btn-outline" style="flex:1; margin-top:0; border-color:var(--neon-green); color:var(--neon-green);" onclick="exportPODiffToExcel()">📥 Excel</button>
+        <button class="btn btn-success" style="flex:1; margin-top:0;" onclick="submitPO()">💾 Submit (Bikin PO)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: MAPPING PRODUK -->
+  <div id="tab-data" class="container">
+    <div class="card">
+      <div class="card-title">Kelola Database, HJA, Nego & Gabungkan Produk</div>
+      
+      <div class="grid-3" style="margin-bottom:8px;">
+        <div class="form-group" style="margin-bottom:0;"><label>Status Obat</label>
+            <select id="filter-status-select" onchange="currentMappingPage=1; renderMappingTable()">
+                <option value="ACTIVE">✅ Aktif</option>
+                <option value="DISCONTINUED">🚫 Discontinue</option>
+                <option value="ALL">Semua Status</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;"><label>Filter PBF</label><select id="filter-pbf-select" onchange="currentMappingPage=1; renderMappingTable()"><option value="ALL">Semua PBF</option></select></div>
+        <div class="form-group" style="margin-bottom:0;"><label>Cari Obat</label><input type="text" id="mapping-search-input" placeholder="Ketik nama..." oninput="currentMappingPage=1; renderMappingTable()"></div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin:8px 0; font-size:0.78rem; flex-wrap:wrap; gap:6px;">
+        <div><input type="checkbox" id="select-all-checkbox" onclick="toggleSelectAll(this)"> <label for="select-all-checkbox" style="display:inline; color:var(--text);">Pilih Semua</label></div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button class="btn btn-small btn-success" style="width:auto; margin-top:0; color:#000;" onclick="openAddProductModal()">+ Tambah</button>
+          <button class="btn btn-small btn-outline-success" style="width:auto; margin-top:0; border-color:var(--neon-cyan); color:var(--neon-cyan);" onclick="mergeSelectedProducts()">🔗 Gabungkan</button>
+          <button class="btn btn-small btn-outline" style="width:auto; margin-top:0;" onclick="exportMappingToExcel()">📥 Ekspor</button>
+          <button class="btn btn-small btn-outline-danger" style="width:auto; margin-top:0;" onclick="deleteSelectedProducts()">🗑️ Hapus</button>
+        </div>
+      </div>
+      
+      <div class="table-container">
+        <table id="mapping-table">
+          <thead>
+            <tr><th style="width:30px;">#</th><th>Apotek (HJA & Margin)</th><th>PBF & Diskon Bertingkat</th><th>Aksi</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="pagination-bar">
+        <button class="btn btn-small btn-outline" onclick="changeMappingPage(-1)">⬅ Sebelumnya</button>
+        <span id="mapping-page-info" style="color:var(--neon-cyan); font-weight:800;">Hal 1 / 1</span>
+        <button class="btn btn-small btn-outline" onclick="changeMappingPage(1)">Selanjutnya ➡</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: DASHBOARD & CEKLIST -->
+  <div id="tab-dashboard" class="container">
+    <div class="card">
+      <div class="card-title">Ceklist Kedatangan & Status Order</div>
+      <div class="grid-2" style="margin-bottom: 8px;">
+        <div class="form-group"><label>Mulai Tanggal</label><input type="date" id="dash-start"></div>
+        <div class="form-group"><label>Sampai Tanggal</label><input type="date" id="dash-end"></div>
+      </div>
+      <div class="form-group">
+        <label>Filter Faktur PBF</label>
+        <select id="dash-filter-pbf" onchange="renderDashboard()">
+            <option value="ALL">-- Tampilkan Semua PBF --</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:6px; margin-bottom:8px;">
+        <button class="btn btn-outline" style="margin-top:0; flex:1;" onclick="renderDashboard()">Tampilkan Data</button>
+        <button class="btn btn-outline" style="margin-top:0; flex:1; border-color:var(--neon-green); color:var(--neon-green);" onclick="exportHistoryToExcel()">📥 Ekspor Excel</button>
+      </div>
+      <button class="btn btn-success" style="margin-top:0;" onclick="openOfflineOrderModal()">⚡ + Catat Order / Sales Datang</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📈 Ringkasan Belanja Periode Ini</div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; font-size:0.75rem; border-collapse:collapse;">
+          <thead>
+            <tr><th>Kategori</th><th style="text-align:right;">Nilai / Jumlah</th></tr>
+          </thead>
+          <tbody id="analytics-table-body">
+            <tr><td>Total Pengeluaran Sukses</td><td style="text-align:right; font-weight:bold; color:var(--neon-green);" id="ana-total-spend">Rp 0</td></tr>
+            <tr><td>Jumlah Item Dipesan</td><td style="text-align:right; font-weight:bold;" id="ana-total-items">0 Item</td></tr>
+            <tr><td>Total Transaksi PBF</td><td style="text-align:right; font-weight:bold;" id="ana-total-trx">0 Transaksi</td></tr>
+            <tr><td>Rata-rata Nilai per Transaksi</td><td style="text-align:right; font-weight:bold; color:var(--neon-cyan);" id="ana-avg-trx">Rp 0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="chart-container">
+        <canvas id="pbfSpendChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card" style="border-color:var(--neon-pink); background:rgba(255, 51, 102, 0.05);">
+        <div class="card-title" style="color:var(--neon-pink);">🔄 Sinkronisasi Cloud & Pemulihan</div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button class="btn btn-small btn-outline" style="margin-top:0; flex:1; border-color:var(--neon-cyan); color:var(--neon-cyan);" onclick="forceCloudSync()">Paksa Sinkronisasi Supabase</button>
+          <button class="btn btn-small btn-outline" style="margin-top:0; flex:1; border-color:var(--neon-yellow); color:var(--neon-yellow);" onclick="restoreFromLocalBackup()">Pulihkan Backup Lokal</button>
+        </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Riwayat Order & Penerimaan Faktur</div>
+      <div id="dashboard-results"></div>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">🏆 Top 10 PBF Terbaik & Terfavorit</div>
+      <div id="pbf-leaderboard" style="font-size:0.82rem;"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📊 Komparasi Harga Termurah vs Alternatif</div>
+      <div class="form-group" style="margin-bottom:8px;"><input type="text" id="price-comp-search" placeholder="Cari nama obat..." oninput="renderPriceComparison()"></div>
+      <div id="price-comparison-results"></div>
+    </div>
+  </div>
+
+  <!-- TAB 6: KEUANGAN & FAKTUR (HUTANG DAGANG) -->
+  <div id="tab-invoices" class="container">
+    <div class="card">
+      <div class="card-title">🧾 Manajemen Keuangan & Hutang Dagang</div>
+      
+      <div class="subnav-tabs">
+        <button class="subnav-btn active" onclick="switchSubFinance('ringkasan')">📊 Ringkasan</button>
+        <button class="subnav-btn" onclick="switchSubFinance('tagihan')">💳 Tagihan Aktif</button>
+        <button class="subnav-btn" onclick="switchSubFinance('analitik')">📈 Grafik & Analitik</button>
+      </div>
+
+      <div id="sub-fin-ringkasan" class="sub-section active">
+        <div class="instruction-box">
+          <b>💡 Keterangan Status:</b><br>
+          • <span style="color:var(--neon-pink);">Merah (Overdue)</span> = Melewati tanggal jatuh tempo.<br>
+          • <span style="color:var(--neon-yellow);">Kuning</span> = Jatuh tempo dalam 7 hari kedepan.<br>
+          • Status Pembayaran: <b>Lunas</b>, <b>Sebagian</b>, atau <b>Belum Bayar</b>.
+        </div>
+        <div class="form-group">
+          <label>Filter PBF</label>
+          <select id="invoice-filter-pbf" onchange="renderInvoiceTab()">
+            <option value="ALL">-- Semua PBF --</option>
+          </select>
+        </div>
+        <div class="calc-box" style="margin-bottom:10px;">
+          <div class="calc-row"><span>Total Tagihan Faktur:</span><strong id="inv-total-rp" style="color:var(--neon-pink);">Rp 0</strong></div>
+          <div class="calc-row"><span>Total Sisa Hutang (Belum Lunas):</span><strong id="inv-total-debt" style="color:var(--neon-yellow);">Rp 0</strong></div>
+        </div>
+        <div id="invoice-results-container"></div>
+      </div>
+
+      <div id="sub-fin-tagihan" class="sub-section">
+        <div style="font-size:0.78rem; color:var(--muted); margin-bottom:8px;">Daftar faktur yang memerlukan perhatian pembayaran segera:</div>
+        <div id="active-debt-container"></div>
+      </div>
+
+      <div id="sub-fin-analitik" class="sub-section">
+        <div style="font-size:0.78rem; color:var(--muted); margin-bottom:6px;">Grafik Perbandingan Pembayaran vs Sisa Hutang per PBF:</div>
+        <div class="chart-container">
+          <canvas id="debtChart"></canvas>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB 7: FAKTUR SUMMARY -->
+  <div id="tab-summary-inv" class="container">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div class="card-title" style="margin-bottom:0;">📋 Arsip Barang Masuk & Rincian Faktur</div>
+        <button class="btn btn-small btn-success" style="width:auto; margin-top:0;" onclick="openManualReceiveModal()">+ Tambah Barang</button>
+      </div>
+      <div class="form-group">
+        <label>Filter PBF Arsip</label>
+        <select id="summary-filter-pbf" onchange="renderSummaryInvTab()">
+          <option value="ALL">-- Semua PBF --</option>
+        </select>
+      </div>
+      <div id="summary-invoice-results-container"></div>
+    </div>
+  </div>
+
+  <!-- MODAL EDIT/TAMBAH PEMETAAN -->
+  <div id="edit-modal" class="modal">
+    <div class="modal-content">
+      <div style="font-weight:800; font-size:1rem; margin-bottom:10px; color:var(--text);" id="modal-title">Edit Produk & Nego Harga PBF</div>
+      <form id="edit-form" onsubmit="saveProductEdit(event)">
+        <input type="hidden" id="edit-prod-id">
+        <div class="form-group"><label>Nama Standar Sistem Apotek</label><input type="text" id="edit-pharmacy-name" required></div>
+        
+        <div class="grid-2">
+            <div class="form-group"><label>Satuan Dasar</label><input type="text" id="edit-pharmacy-unit" required></div>
+            <div class="form-group"><label>Harga Jual Apotek (Rp)</label><input type="number" id="edit-sell-price" required></div>
+        </div>
+
+        <div class="grid-3">
+          <div class="form-group">
+            <label>ADC/Hari <span style="font-size:0.55rem; color:var(--neon-green);">(Otomatis)</span></label>
+            <input type="number" step="0.001" id="edit-adc" required>
+          </div>
+          <div class="form-group"><label>ABC</label>
+            <select id="edit-category"><option value="AUTO">Otomatis</option><option value="FAST">Fast</option><option value="MEDIUM">Med</option><option value="SLOW">Slow</option></select>
+          </div>
+          <div class="form-group"><label>Golongan</label>
+            <select id="edit-golongan">
+              <option value="OBAT BEBAS">Hijau</option><option value="OBAT BEBAS TERBATAS">Biru</option>
+              <option value="OBAT KERAS">Merah</option><option value="ALKES">Alkes</option>
+              <option value="PREKURSOR">Prekursaor</option><option value="PSIKOTROPIKA / NARKOTIKA">Narkotika</option>
+              <option value="SUPLEMEN / HERBAL">Herbal</option>
+            </select>
+          </div>
+        </div>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin:12px 0 6px 0;">
+          <span style="font-size:0.82rem; font-weight:800; color:var(--neon-cyan);">Daftar PBF, Nego & Diskon Bertingkat:</span>
+          <button type="button" class="btn btn-small btn-outline-success" onclick="openAddSupplierForm()">+ Tambah PBF Nego</button>
+        </div>
+        <div id="edit-suppliers-list"></div>
+        
+        <button type="submit" class="btn btn-success" style="margin-top:12px;">💾 Simpan Data</button>
+        <button type="button" class="btn btn-outline" style="margin-top:6px;" onclick="closeEditModal()">Batal</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL CATAT SALES OFFLINE -->
+  <div id="offline-modal" class="modal">
+    <div class="modal-content">
+      <div style="font-weight:800; font-size:1rem; margin-bottom:10px; color:var(--neon-green);">⚡ Catat Order / Sales Datang</div>
+      <form onsubmit="saveOfflineOrder(event)">
+        <div class="form-group">
+          <label>Pilih PBF / Sales</label>
+          <select id="off-pbf-name" onchange="document.getElementById('off-item-name').value = '';"></select>
+        </div>
+        <div class="form-group">
+          <label>Nama Barang / Obat</label>
+          <input type="text" id="off-item-name" placeholder="Ketik nama untuk mencari..." autocomplete="off" oninput="searchOfflineProducts()" required>
+          <div id="off-search-results" class="search-results"></div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label>Jumlah Qty</label><input type="number" id="off-qty" value="1" min="1" oninput="calcOfflineTotal()" required></div>
+          <div class="form-group"><label>Satuan Faktur</label><input type="text" id="off-unit" value="BOX" required></div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Tipe Harga Satuan</label>
+            <select id="off-price-type" onchange="calcOfflineTotal()">
+              <option value="HPP">HPP / Nett</option>
+              <option value="HNA">HNA (+ Diskon)</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Harga Satuan Mentah (Rp)</label><input type="number" id="off-base-price" placeholder="Harga per satuan..." oninput="calcOfflineTotal()" required></div>
+        </div>
+
+        <div style="background: rgba(0,210,255,0.05); border: 1px solid var(--border); border-radius: 8px; padding: 8px; margin-bottom: 10px;">
+          <label style="color:var(--neon-cyan); font-weight:800; margin-bottom:6px;">⚡ Diskon Standar & Bertingkat Manual</label>
+          <div class="grid-2">
+             <div class="form-group"><label>Diskon Dasar 1 (%)</label><input type="number" step="0.1" id="off-disc1" value="0" oninput="calcOfflineTotal()"></div>
+             <div class="form-group"><label>Diskon Dasar 2 (%)</label><input type="number" step="0.1" id="off-disc2" value="0" oninput="calcOfflineTotal()"></div>
+          </div>
+          <div style="border-top:1px dashed var(--border); padding-top:6px; margin-top:4px;">
+             <label style="font-size:0.7rem; color:var(--neon-yellow);">Diskon Grosir/Bertingkat Tambahan</label>
+             <div class="grid-2">
+                <div class="form-group" style="margin-bottom:0;"><label style="font-size:0.65rem;">Min. Qty Grosir</label><input type="number" id="off-tier-qty" value="0" oninput="calcOfflineTotal()"></div>
+                <div class="form-group" style="margin-bottom:0;"><label style="font-size:0.65rem;">Disc Grosir (%)</label><input type="number" step="0.1" id="off-tier-disc" value="0" oninput="calcOfflineTotal()"></div>
+             </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+           <label>Total Rupiah Faktur Nett (Rp)</label><input type="number" id="off-total-rp" placeholder="Total tagihan..." required style="font-weight:bold; color:var(--neon-green);">
+        </div>
+        
+        <div class="form-group">
+           <label>Status Transaksi Masuk</label>
+           <select id="off-entry-status" onchange="toggleOfflineFields()">
+              <option value="PENDING">Hanya PO (Belum Datang / Menunggu Penerimaan)</option>
+              <option value="RECEIVED">Barang Langsung Datang / Diterima Hari Ini</option>
+           </select>
+        </div>
+
+        <div id="offline-rec-fields" style="display:none; border-top:1px dashed var(--border); padding-top:8px; margin-top:8px;">
+           <div class="form-group"><label>No. Faktur Fisik</label><input type="text" id="off-faktur-num" placeholder="Nomor faktur..."></div>
+           <div class="grid-2">
+             <div class="form-group"><label>Jenis Pembayaran</label><select id="off-pay-type"><option value="KREDIT">Kredit</option><option value="COD">COD / Tunai</option></select></div>
+             <div class="form-group"><label>Tanggal Faktur</label><input type="date" id="off-inv-date"></div>
+           </div>
+           <div class="form-group">
+             <label>Jatuh Tempo (Tanggal / Jumlah Hari TOP)</label>
+             <input type="text" id="off-top-input" placeholder="Contoh: 30 atau 2026-10-15" value="30">
+           </div>
+        </div>
+
+        <button type="submit" class="btn btn-success" style="margin-top:10px;">💾 Simpan Data</button>
+        <button type="button" class="btn btn-outline" style="margin-top:6px;" onclick="closeOfflineOrderModal()">Batal</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL PENERIMAAN FAKTUR -->
+  <div id="receive-modal" class="modal">
+    <div class="modal-content">
+      <div style="font-weight:800; font-size:1rem; margin-bottom:10px; color:var(--neon-cyan);" id="rec-title">Terima Faktur & Atur Jatuh Tempo</div>
+      <form onsubmit="saveReceiveOrder(event)">
+        <div class="form-group">
+          <label>No. Faktur (Fisik dari PBF)</label>
+          <input type="text" id="rec-faktur" placeholder="Contoh: INV-998877" required>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label>Qty Datang (Real)</label><input type="number" id="rec-qty" min="0" oninput="calcReceiveTotal()" required></div>
+          <div class="form-group">
+            <label>Tipe Pembayaran</label>
+            <select id="rec-pay-type">
+              <option value="KREDIT">Kredit</option>
+              <option value="COD">COD / Tunai</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label>Harga Satuan (Rp)</label><input type="number" id="rec-price" oninput="calcReceiveTotal()" required></div>
+          <div class="form-group"><label>Diskon (%) Tambahan</label><input type="number" step="0.1" id="rec-disc" value="0" oninput="calcReceiveTotal()"></div>
+        </div>
+        
+        <div class="grid-2">
+          <div class="form-group"><label>Tanggal Faktur</label><input type="date" id="rec-inv-date" required></div>
+          <div class="form-group"><label>Jatuh Tempo (Tgl / Hari TOP)</label><input type="text" id="rec-top-input" placeholder="Misal: 30 atau 2026-12-31" value="30" required></div>
+        </div>
+
+        <div class="form-group" style="background: rgba(0,210,255,0.1); padding:10px; border-radius:8px; border:1px solid var(--neon-cyan);">
+           <label style="color:var(--text); font-weight:800;">Opsi PPN (Pajak)</label>
+           <div style="display:flex; align-items:center; gap:8px;">
+             <input type="checkbox" id="rec-ppn-check" onchange="calcReceiveTotal()"> 
+             <span style="font-size:0.8rem; color:var(--text);">+ Tambah PPN Faktur</span>
+             <input type="number" step="0.1" id="rec-ppn-val" value="11" style="width:60px; padding:4px; margin-left:auto;" oninput="calcReceiveTotal()"> 
+             <span style="font-size:0.8rem;">%</span>
+           </div>
+        </div>
+
+        <div class="form-group" style="margin-top:10px;">
+           <label>Total Sub Rupiah (Cocokkan Kertas Faktur)</label>
+           <input type="number" id="rec-total" style="font-size:1.1rem; font-weight:bold; color:var(--neon-green);" required>
+        </div>
+        <button type="submit" class="btn btn-success" style="margin-top:10px;">✅ Simpan Penerimaan & Faktur</button>
+        <button type="button" class="btn btn-outline" style="margin-top:6px;" onclick="closeReceiveModal()">Batal</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL PEMBAYARAN FAKTUR -->
+  <div id="payment-modal" class="modal">
+    <div class="modal-content">
+      <div style="font-weight:800; font-size:1rem; margin-bottom:10px; color:var(--neon-green);">💳 Catat Pembayaran Faktur</div>
+      <form onsubmit="savePaymentAction(event)">
+        <input type="hidden" id="pay-faktur-num-target">
+        <div class="form-group"><label>Nomor Faktur</label><input type="text" id="pay-faktur-display" disabled></div>
+        <div class="grid-2">
+          <div class="form-group"><label>Total Tagihan</label><input type="text" id="pay-total-display" disabled></div>
+          <div class="form-group"><label>Sisa Belum Dibayar</label><input type="text" id="pay-sisa-display" disabled style="color:var(--neon-pink); font-weight:bold;"></div>
+        </div>
+        <div class="form-group"><label>Nominal Bayar Sekarang (Rp)</label><input type="number" id="pay-nominal-input" required></div>
+        <button type="submit" class="btn btn-success" style="margin-top:10px;">💾 Proses Pembayaran</button>
+        <button type="button" class="btn btn-outline" style="margin-top:6px;" onclick="closePaymentModal()">Batal</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL TAMBAH BARANG MANUAL -->
+  <div id="manual-receive-modal" class="modal">
+    <div class="modal-content">
+      <div style="font-weight:800; font-size:1rem; margin-bottom:10px; color:var(--neon-cyan);">📦 Tambah Barang / Orderan Manual (Luar Sistem PO)</div>
+      <form onsubmit="saveManualReceiveOrder(event)">
+        <div class="form-group">
+          <label>Pilih PBF / Supplier</label>
+          <select id="man-pbf-name"></select>
+        </div>
+        <div class="form-group">
+          <label>Nama Barang / Obat</label>
+          <input type="text" id="man-item-name" placeholder="Ketik nama barang manual..." required>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label>No. Faktur Fisik</label><input type="text" id="man-faktur" placeholder="No Faktur..." required></div>
+          <div class="form-group"><label>Qty Datang</label><input type="number" id="man-qty" min="1" value="1" oninput="calcManTotal()" required></div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label>Satuan</label><input type="text" id="man-unit" value="BOX" required></div>
+          <div class="form-group"><label>Harga Satuan (Rp)</label><input type="number" id="man-price" oninput="calcManTotal()" required></div>
+        </div>
+        
+        <div style="background: rgba(0,210,255,0.05); border: 1px solid var(--border); border-radius: 8px; padding: 8px; margin-bottom: 10px;">
+          <label style="color:var(--neon-cyan); font-weight:800; margin-bottom:6px;">⚡ Diskon Standar & Bertingkat Manual</label>
+          <div class="grid-2">
+             <div class="form-group"><label>Diskon Dasar 1 (%)</label><input type="number" step="0.1" id="man-disc1" value="0" oninput="calcManTotal()"></div>
+             <div class="form-group"><label>Diskon Dasar 2 (%)</label><input type="number" step="0.1" id="man-disc2" value="0" oninput="calcManTotal()"></div>
+          </div>
+          <div style="border-top:1px dashed var(--border); padding-top:6px; margin-top:4px;">
+             <div class="grid-2">
+                <div class="form-group" style="margin-bottom:0;"><label style="font-size:0.65rem;">Min. Qty Grosir</label><input type="number" id="man-tier-qty" value="0" oninput="calcManTotal()"></div>
+                <div class="form-group" style="margin-bottom:0;"><label style="font-size:0.65rem;">Disc Grosir (%)</label><input type="number" step="0.1" id="man-tier-disc" value="0" oninput="calcManTotal()"></div>
+             </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group"><label>Jenis Pembayaran</label><select id="man-pay-type"><option value="KREDIT">Kredit</option><option value="COD">COD / Tunai</option></select></div>
+          <div class="form-group"><label>Tanggal Faktur</label><input type="date" id="man-inv-date" required></div>
+        </div>
+        <div class="form-group"><label>Jatuh Tempo (Tanggal / Hari TOP)</label><input type="text" id="man-top" value="30" required></div>
+        <div class="form-group">
+          <label>Total Sub Rupiah Faktur (Rp)</label>
+          <input type="number" id="man-total" style="font-weight:bold; color:var(--neon-green);" required>
+        </div>
+        <button type="submit" class="btn btn-success" style="margin-top:10px;">✅ Simpan Barang Manual</button>
+        <button type="button" class="btn btn-outline" style="margin-top:6px;" onclick="closeManualReceiveModal()">Batal</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- NAVIGASI BAWAH -->
+  <div class="nav-bar">
+    <div class="nav-item active" onclick="switchTab('order')"><span class="nav-icon">🔍</span><span>Order</span></div>
+    <div class="nav-item" onclick="switchTab('sync')"><span class="nav-icon">📂</span><span>Update</span></div>
+    <div class="nav-item" onclick="switchTab('po')"><span class="nav-icon">🛒</span><span>Draft</span></div>
+    <div class="nav-item" onclick="switchTab('data')"><span class="nav-icon">✏️</span><span>Database</span></div>
+    <div class="nav-item" onclick="switchTab('dashboard')"><span class="nav-icon">📋</span><span>Ceklist</span></div>
+    <div class="nav-item" onclick="switchTab('invoices')"><span class="nav-icon">💰</span><span>Keuangan</span></div>
+    <div class="nav-item" onclick="switchTab('summary-inv')"><span class="nav-icon">🧾</span><span>Faktur</span></div>
+  </div>
+
+  <script>
+    const supabaseUrl = "https://stkdobvcbkjcfyxdsovh.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0a2RvYnZjYmtqY2Z5eGRzb3ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2NTM5NzMsImV4cCI6MjEwNTIyOTk3M30.A3_vgXO2LG4Beu5Z8FbJXa0atZZpgdQhU3Vsoz6wh3w";
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    let pbfList = ["Rubel Anugerah Medicatama", "San Prima Sejati", "Kinarya Mitra Sejahtera", "Singgasana", "Nara Artha", "Trivetsa Lancar Abadi"];
+    let productsDB = [];
+    let orderHistory = [];
+    let draftPO = [];
+    let keywordAliases = {}; 
+    
+    let selectedProduct = null;
+    let currentCalcSuppliers = [];
+    let currentQtyPharmacyUnit = 0;
+    
+    let currentMappingPage = 1;
+    const itemsPerPage = 50;
+    let currentReceiveId = null;
+
+    let pbfChartInstance = null;
+    let debtChartInstance = null;
+    let editingSuppliers = [];
+
+    function showLoading(text) {
+      document.getElementById('loading-text').innerText = text;
+      document.getElementById('loading-overlay').style.display = 'flex';
+    }
+    function hideLoading() { document.getElementById('loading-overlay').style.display = 'none'; }
+
+    // SISTEM PENYIMPANAN HIBRIDA
+    function loadDataLocally() {
+      try {
+        const localProd = localStorage.getItem('gm_db_products_v49_full');
+        const localHist = localStorage.getItem('gm_db_history_v49_full');
+        const localDraft = localStorage.getItem('gm_db_draft_v49_full');
+        const localPbf = localStorage.getItem('gm_db_pbf_v49_full');
+        const localAlias = localStorage.getItem('gm_db_alias_v49_full');
+
+        if (localProd) productsDB = JSON.parse(localProd);
+        if (localHist) orderHistory = JSON.parse(localHist);
+        if (localDraft) draftPO = JSON.parse(localDraft);
+        if (localPbf) pbfList = JSON.parse(localPbf);
+        if (localAlias) keywordAliases = JSON.parse(localAlias);
+      } catch(e) {}
+    }
+
+    function saveDataLocally() {
+      try {
+        localStorage.setItem('gm_db_products_v49_full', JSON.stringify(productsDB));
+        localStorage.setItem('gm_db_history_v49_full', JSON.stringify(orderHistory));
+        localStorage.setItem('gm_db_draft_v49_full', JSON.stringify(draftPO));
+        localStorage.setItem('gm_db_pbf_v49_full', JSON.stringify(pbfList));
+        localStorage.setItem('gm_db_alias_v49_full', JSON.stringify(keywordAliases));
+      } catch(e) {}
+    }
+
+    async function syncToCloudBackground(showNotification = false) {
+      saveDataLocally();
+      try {
+        let hasError = false;
+        let lastErrorMsg = "";
+
+        if (productsDB.length > 0) {
+          const { error } = await supabaseClient.from('products').upsert(productsDB.map(p => ({
+            id: String(p.id),
+            pharmacy_name: p.pharmacyName,
+            pharmacy_unit: p.pharmacyUnit,
+            sell_price: p.sellPrice,
+            adc: p.adc,
+            category: p.category || 'AUTO',
+            golongan: p.golongan || 'OBAT BEBAS',
+            last_stock: p.lastStock,
+            last_update: p.lastUpdate,
+            is_discontinued: !!p.isDiscontinued,
+            suppliers: p.suppliers || []
+          })), { onConflict: 'id' });
+          
+          if (error) { hasError = true; lastErrorMsg = error.message; }
+        }
+
+        if (orderHistory.length > 0) {
+          const { error } = await supabaseClient.from('history').upsert(orderHistory.map(h => ({
+            id: String(h.id),
+            po_number: h.poNumber,
+            faktur_number: h.fakturNumber || '',
+            submit_date: h.submitDate,
+            prod_id: h.prodId || '',
+            pharmacy_name: h.pharmacyName,
+            qty_pharmacy_unit: h.qtyPharmacyUnit || 0,
+            pbf_name: h.pbfName,
+            pbf_item_name: h.pbfItemName,
+            pbf_order_qty: h.pbfOrderQty || 0,
+            pbf_unit: h.pbfUnit,
+            price: h.price || 0,
+            total_rp: h.totalRp || 0,
+            status: h.status,
+            payment_type: h.paymentType || 'KREDIT',
+            invoice_date: h.invoiceDate || '',
+            due_date: h.dueDate || '',
+            paid_amount: h.paidAmount || 0,
+            payment_status: h.paymentStatus || 'UNPAID'
+          })), { onConflict: 'id' });
+          
+          if (error) { hasError = true; lastErrorMsg = error.message; }
+        }
+
+        await supabaseClient.from('app_config').upsert([
+          { key: 'pbfList', value: pbfList },
+          { key: 'keywordAliases', value: keywordAliases }
+        ], { onConflict: 'key' });
+
+        if (showNotification) {
+          if (hasError) {
+             alert("❌ GAGAL PUSH KE CLOUD!\nSupabase menolak data: " + lastErrorMsg);
+          } else {
+             alert("✅ SINKRONISASI SUKSES!\nData berhasil diperbarui di cloud.");
+          }
+        }
+      } catch(e) {
+        if (showNotification) alert("Terjadi masalah jaringan/cloud: " + e.message);
+      }
+    }
+
+    async function initSystem() {
+      showLoading("MENARIK DATA CLOUD...");
+      loadDataLocally();
+
+      try {
+        let hasPullError = false;
+        let pullErrorMsg = "";
+
+        const { data: prodData, error: prodErr } = await supabaseClient.from('products').select('*');
+        if (prodErr) { hasPullError = true; pullErrorMsg = prodErr.message; } 
+        else if (prodData && prodData.length > 0) {
+          productsDB = prodData.map(p => ({
+            id: p.id, pharmacyName: p.pharmacy_name, pharmacyUnit: p.pharmacy_unit,
+            sellPrice: p.sell_price, adc: p.adc, category: p.category, golongan: p.golongan,
+            lastStock: p.last_stock, lastUpdate: p.last_update, isDiscontinued: p.is_discontinued,
+            suppliers: p.suppliers || []
+          }));
+        }
+
+        const { data: histData, error: histErr } = await supabaseClient.from('history').select('*');
+        if (histErr) { hasPullError = true; pullErrorMsg = histErr.message; }
+        else if (histData && histData.length > 0) {
+          orderHistory = histData.map(h => ({
+            id: h.id, poNumber: h.po_number, fakturNumber: h.faktur_number, submitDate: h.submit_date,
+            prodId: h.prod_id, pharmacyName: h.pharmacy_name, qtyPharmacyUnit: h.qty_pharmacy_unit,
+            pbfName: h.pbf_name, pbfItemName: h.pbf_item_name, pbfOrderQty: h.pbf_order_qty, pbfUnit: h.pbf_unit,
+            price: h.price, totalRp: h.total_rp, status: h.status, paymentType: h.payment_type,
+            invoiceDate: h.invoice_date, dueDate: h.due_date, paidAmount: h.paid_amount, paymentStatus: h.payment_status
+          }));
+        }
+
+        const { data: cfgData } = await supabaseClient.from('app_config').select('*');
+        if (cfgData) {
+          cfgData.forEach(c => {
+            if (c.key === 'pbfList' && c.value) pbfList = c.value;
+            if (c.key === 'keywordAliases' && c.value) keywordAliases = c.value;
+          });
+        }
+
+        saveDataLocally();
+
+        if (hasPullError) {
+           alert("⚠️ PERINGATAN CLOUD!\nGagal menarik dari Supabase, menggunakan data lokal.\nDetail: " + pullErrorMsg);
+        }
+
+      } catch(e) {}
+
+      hideLoading();
+      initUI();
+    }
+
+    function forceCloudSync() {
+      showLoading("SINKRONISASI KE CLOUD...");
+      syncToCloudBackground(true).then(() => {
+        hideLoading();
+      });
+    }
+
+    function restoreFromLocalBackup() {
+      loadDataLocally();
+      initUI();
+      alert("Data berhasil dipulihkan dari cadangan lokal!");
+    }
+
+    function initUI() {
+      autoCalculateADC();
+      renderPBFSelectOptions();
+      renderFilterPBFSelect();
+      renderInvoiceFilterPbf();
+      renderSummaryFilterPbf();
+      renderPO();
+      renderMappingTable();
+      renderSmartAlerts();
+      renderDashboardPbfFilter();
+      if(document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
+      if(document.getElementById('tab-invoices').classList.contains('active')) renderInvoiceTab();
+      if(document.getElementById('tab-summary-inv').classList.contains('active')) renderSummaryInvTab();
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      
+      const target = document.getElementById('tab-' + tabId);
+      if(target) target.classList.add('active');
+      
+      const navMap = { 'order': 0, 'sync': 1, 'po': 2, 'data': 3, 'dashboard': 4, 'invoices': 5, 'summary-inv': 6 };
+      const navItems = document.querySelectorAll('.nav-item');
+      if(navMap[tabId] !== undefined && navItems[navMap[tabId]]) {
+        navItems[navMap[tabId]].classList.add('active');
+      }
+
+      if (tabId === 'dashboard') renderDashboard();
+      if (tabId === 'invoices') renderInvoiceTab();
+      if (tabId === 'summary-inv') renderSummaryInvTab();
+      if (tabId === 'data') renderMappingTable();
+    }
+
+    function goBackTab() { switchTab('order'); }
+
+    function toggleTheme() {
+      const body = document.body;
+      const btn = document.getElementById('theme-btn');
+      if (body.classList.contains('dark-mode')) {
+        body.classList.remove('dark-mode');
+        body.classList.add('light-mode');
+        btn.innerText = '🌙';
+      } else {
+        body.classList.remove('light-mode');
+        body.classList.add('dark-mode');
+        btn.innerText = '☀️';
+      }
+    }
+
+    function renderPBFSelectOptions() {
+      const options = pbfList.map(p => `<option value="${p}">${p}</option>`).join('');
+      const syncSel = document.getElementById('sync-pbf-name');
+      const offSel = document.getElementById('off-pbf-name');
+      const manSel = document.getElementById('man-pbf-name');
+      if (syncSel) syncSel.innerHTML = options;
+      if (offSel) offSel.innerHTML = options;
+      if (manSel) manSel.innerHTML = options;
+    }
+
+    function renderFilterPBFSelect() {
+      const sel = document.getElementById('filter-pbf-select');
+      if (sel) sel.innerHTML = `<option value="ALL">Semua PBF</option>` + pbfList.map(p => `<option value="${p}">${p}</option>`).join('');
+    }
+
+    function promptAddPBF() {
+      const name = prompt("Masukkan Nama PBF Baru:");
+      if (name && name.trim()) {
+        const trimmed = name.trim();
+        if (!pbfList.includes(trimmed)) {
+          pbfList.push(trimmed);
+          syncToCloudBackground();
+          initUI();
+          alert("PBF " + trimmed + " berhasil ditambahkan.");
+        } else {
+          alert("PBF sudah ada!");
+        }
+      }
+    }
+
+    function promptEditPBFName() {
+      const select = document.getElementById('sync-pbf-name');
+      if (!select || !select.value) return;
+      const oldName = select.value;
+      const newName = prompt("Ubah Nama PBF:", oldName);
+      if (newName && newName.trim() && newName.trim() !== oldName) {
+        const trimmed = newName.trim();
+        const idx = pbfList.indexOf(oldName);
+        if (idx !== -1) pbfList[idx] = trimmed;
+
+        productsDB.forEach(p => {
+          p.suppliers.forEach(s => {
+            if (s.pbfName === oldName) s.pbfName = trimmed;
+          });
+        });
+
+        syncToCloudBackground();
+        initUI();
+        alert("Nama PBF diperbarui!");
+      }
+    }
+
+    function toggleDiscountInputs() {
+      const type = document.getElementById('sync-price-type').value;
+      const box = document.getElementById('disc-input-box');
+      if (box) box.style.display = type === 'HNA_DISC' ? 'grid' : 'none';
+    }
+
+    function autoCalculateADC() {
+      let isUpdated = false;
+      const now = new Date();
+      productsDB.forEach(prod => {
+        const prodOrders = orderHistory.filter(h => (h.prodId === prod.id || h.pharmacyName === prod.pharmacyName) && h.status === 'RECEIVED');
+        if (prodOrders.length >= 2) { 
+          prodOrders.sort((a, b) => new Date(a.submitDate) - new Date(b.submitDate));
+          const firstDate = new Date(prodOrders[0].submitDate);
+          const daysElapsed = Math.max(1, (now - firstDate) / (1000 * 60 * 60 * 24));
+          let totalQty = 0;
+          prodOrders.forEach(h => {
+            if (h.qtyPharmacyUnit) {
+              totalQty += h.qtyPharmacyUnit;
+            } else {
+              const sup = prod.suppliers.find(s => s.pbfName === h.pbfName);
+              const ratio = sup ? (parseFloat(sup.conversionRatio) || 1) : 1;
+              totalQty += (h.pbfOrderQty * ratio);
+            }
+          });
+          const calculatedADC = parseFloat((totalQty / daysElapsed).toFixed(3));
+          if (calculatedADC > 0 && prod.adc !== calculatedADC) { prod.adc = calculatedADC; isUpdated = true; }
+        }
+      });
+      if (isUpdated) syncToCloudBackground();
+    }
+
+    function autoDetectGolongan(name) {
+      const n = name.toUpperCase();
+      if (n.includes('INJEKSI') || n.includes('TRAMADOL') || n.includes('ALPRAZOLAM')) return 'PSIKOTROPIKA / NARKOTIKA';
+      if (n.includes('EPHEDRINE') || n.includes('PSEUDOEPHEDRINE')) return 'PREKURSOR';
+      if (n.includes('KASSA') || n.includes('SPUIT') || n.includes('INFUS') || n.includes('MASKER')) return 'ALKES';
+      if (n.includes('VIT') || n.includes('SUPLEMEN') || n.includes('CURCUMA')) return 'SUPLEMEN / HERBAL';
+      if (n.includes('TETRASIKLIN') || n.includes('AMOXICILLIN') || n.includes('ANTIBIOTIK') || n.includes('DEXAMETHASONE')) return 'OBAT KERAS';
+      if (n.includes('PARACETAMOL') || n.includes('HUFAGRIPP') || n.includes('BIMADOL')) return 'OBAT BEBAS TERBATAS';
+      return 'OBAT BEBAS';
+    }
+
+    function getCategoryInfo(prod) {
+      let cat = prod.category || "AUTO";
+      if (cat === "AUTO") { if (prod.adc >= 1.0) cat = "FAST"; else if (prod.adc >= 0.2) cat = "MEDIUM"; else cat = "SLOW"; }
+      if (cat === "FAST") return { label: "FAST", class: "badge-fast" };
+      if (cat === "MEDIUM") return { label: "MED", class: "badge-medium" };
+      return { label: "SLOW", class: "badge-slow" };
+    }
+
+    function getCustomTieredDiscount(sup, qtyPBF) {
+      let extraDisc = 0;
+      if (sup.tier3Qty && qtyPBF >= sup.tier3Qty) extraDisc = sup.tier3Disc || 0;
+      else if (sup.tier2Qty && qtyPBF >= sup.tier2Qty) extraDisc = sup.tier2Disc || 0;
+      else if (sup.tier1Qty && qtyPBF >= sup.tier1Qty) extraDisc = sup.tier1Disc || 0;
+      return extraDisc;
+    }
+
+    function renderSmartAlerts() {
+      const container = document.getElementById('alert-board'); 
+      const list = document.getElementById('alert-list'); 
+      const headerTitle = document.getElementById('alert-title');
+      let criticalAlerts = []; 
+      let routineAlerts = []; 
+      const today = new Date();
+      
+      productsDB.forEach(p => {
+        if(p.isDiscontinued) return;
+        let diffDays = p.lastUpdate ? Math.max(0, Math.floor((today - new Date(p.lastUpdate)) / (1000 * 60 * 60 * 24))) : 999;
+        let estStock = p.lastStock !== null ? (p.lastStock - (p.adc * diffDays)) : null;
+        const rop = Math.ceil((4 * p.adc)); 
+        
+        if (estStock !== null && estStock <= rop) {
+           criticalAlerts.push(p);
+        } else if (diffDays >= 10) {
+           routineAlerts.push({prod: p, diff: diffDays});
+        }
+      });
+      
+      routineAlerts.sort((a,b) => b.diff - a.diff);
+      let alertsHTML = '';
+      let hasCritical = criticalAlerts.length > 0;
+      let totalAlerts = criticalAlerts.length + routineAlerts.length;
+      
+      criticalAlerts.slice(0, 20).forEach(p => {
+         let diffDays = p.lastUpdate ? Math.max(0, Math.floor((today - new Date(p.lastUpdate)) / (1000 * 60 * 60 * 24))) : 0;
+         let estStock = p.lastStock - (p.adc * diffDays);
+         alertsHTML += `<div class="alert-item" onclick="switchToOrderAndSelect('${p.id}')">
+            <strong>${p.pharmacyName}</strong>
+            <span style="color:var(--neon-yellow)">Est: ${Math.max(0, Math.floor(estStock))}</span>
+            <div style="font-size:0.6rem; color:var(--neon-pink);">Segera Order!</div>
+         </div>`;
+      });
+      
+      routineAlerts.slice(0, 20).forEach(item => {
+         const p = item.prod;
+         const diffText = item.diff === 999 ? 'Belum pernah dicek' : `> ${item.diff} hari tdk dicek`;
+         alertsHTML += `<div class="alert-item routine" onclick="switchToOrderAndSelect('${p.id}')">
+            <strong style="color:var(--neon-cyan)">${p.pharmacyName}</strong>
+            <span style="color:var(--muted); font-size:0.65rem;">${diffText}</span>
+            <div style="font-size:0.6rem; color:var(--neon-cyan); margin-top:2px;">Cek stok atau Discontinue</div>
+            <button class="btn btn-small btn-outline-danger" style="padding:2px 4px; font-size:0.65rem; margin-top:4px; width:100%" onclick="event.stopPropagation(); toggleDiscontinueAndAlert('${p.id}', true)">🚫 Blokir</button>
+         </div>`;
+      });
+      
+      list.innerHTML = alertsHTML; 
+      container.style.display = totalAlerts > 0 ? 'block' : 'none';
+      if(!hasCritical && totalAlerts > 0) {
+          container.style.borderColor = 'var(--neon-cyan)'; container.style.backgroundColor = 'rgba(0, 210, 255, 0.08)'; headerTitle.style.color = 'var(--neon-cyan)'; headerTitle.innerHTML = '🔍 Pengingat Cek Stok Rutin';
+      } else {
+          container.style.borderColor = 'var(--neon-pink)'; container.style.backgroundColor = 'rgba(255, 51, 102, 0.08)'; headerTitle.style.color = 'var(--neon-pink)'; headerTitle.innerHTML = '⚠️ Rekomendasi Cek Segera!';
+      }
+    }
+
+    function toggleDiscontinueAndAlert(id, status) {
+       if(confirm("Yakin ingin memblokir/discontinue produk ini?")) {
+           toggleDiscontinue(id, status);
+       }
+    }
+
+    function switchToOrderAndSelect(pId) {
+       switchTab('order');
+       selectProduct(pId);
+    }
+
+    function saveStockToMemory() {
+      if (!selectedProduct) return alert("Pilih produk terlebih dahulu!");
+      const curStock = parseFloat(document.getElementById('current-stock').value) || 0;
+      const prod = productsDB.find(p => p.id === selectedProduct.id);
+      if(!prod) return alert("Produk tidak ditemukan!");
+      prod.lastStock = curStock; 
+      prod.lastUpdate = new Date().toISOString();
+      syncToCloudBackground(); 
+      alert("Stok & Tanggal Cek Terakhir berhasil diperbarui!"); 
+      renderMappingTable(); 
+      renderSmartAlerts();
+    }
+
+    function onSearchInput() {
+      const query = document.getElementById('search-input').value.toLowerCase().trim();
+      const resultsContainer = document.getElementById('search-results');
+      if (query.length < 1) { resultsContainer.style.display = 'none'; return; }
+      const filtered = productsDB.filter(p => !p.isDiscontinued && (p.pharmacyName.toLowerCase().includes(query) || p.id.toLowerCase().includes(query))).slice(0, 12);
+      if (filtered.length === 0) { resultsContainer.innerHTML = `<div class="search-item"><div class="search-item-sub">Tidak ditemukan.</div></div>`; } 
+      else {
+        resultsContainer.innerHTML = filtered.map(p => {
+          const cat = getCategoryInfo(p);
+          return `<div class="search-item" onclick="selectProduct('${p.id}')">
+            <div style="display:flex; justify-content:space-between;"><span class="search-item-title">${p.pharmacyName}</span><span class="badge ${cat.class}" style="font-size:0.5rem; padding:1px 4px; margin:0;">${cat.label}</span></div>
+            <div class="search-item-sub">HJA: Rp ${(p.sellPrice || 0).toLocaleString('id-ID')} | Satuan: ${p.pharmacyUnit}</div>
+          </div>`;
+        }).join('');
+      }
+      resultsContainer.style.display = 'block';
+    }
+
+    function selectProduct(pId) {
+      selectedProduct = productsDB.find(p => p.id === pId);
+      if(!selectedProduct) return;
+      document.getElementById('search-results').style.display = 'none';
+      document.getElementById('search-input').value = selectedProduct.pharmacyName;
+      document.getElementById('selected-prod-title').innerText = selectedProduct.pharmacyName;
+      document.getElementById('selected-prod-unit').innerText = "Satuan Dasar: " + selectedProduct.pharmacyUnit;
+      document.getElementById('stock-label').innerText = `Stok Aktual (${selectedProduct.pharmacyUnit})`;
+      
+      const cat = getCategoryInfo(selectedProduct); 
+      const gol = selectedProduct.golongan || autoDetectGolongan(selectedProduct.pharmacyName);
+      document.getElementById('selected-prod-category').innerHTML = `<span class="badge ${cat.class}">${cat.label}</span>`;
+      document.getElementById('selected-prod-golongan').innerHTML = `<span class="badge badge-golongan">${gol}</span>`;
+      if(selectedProduct.lastStock !== null) document.getElementById('current-stock').value = selectedProduct.lastStock;
+      calculateOrder();
+    }
+
+    function calculateOrder() {
+      if (!selectedProduct) return;
+      const curStock = parseFloat(document.getElementById('current-stock').value) || 0;
+      const targetDays = parseFloat(document.getElementById('target-days').value) || 20;
+      const leaveDays = parseFloat(document.getElementById('leave-days').value) || 0; 
+      
+      const rop = Math.ceil((selectedProduct.adc * 2) + (selectedProduct.adc * leaveDays));
+      const maxStock = Math.ceil(rop + (selectedProduct.adc * targetDays));
+      currentQtyPharmacyUnit = maxStock - curStock;
+
+      document.getElementById('val-adc').innerText = selectedProduct.adc + ' /hari';
+      document.getElementById('val-safety').innerText = "+" + Math.ceil(selectedProduct.adc * leaveDays) + " " + selectedProduct.pharmacyUnit;
+      document.getElementById('val-qty-order').innerText = Math.max(0, currentQtyPharmacyUnit) + ' ' + selectedProduct.pharmacyUnit;
+
+      if(selectedProduct.suppliers.length === 0) { document.getElementById('supplier-matrix').innerHTML = `<p style="color:var(--neon-yellow); font-size:0.8rem;">Belum dipetakan ke PBF.</p>`; return; }
+
+      currentCalcSuppliers = selectedProduct.suppliers.map(s => {
+        const ratio = parseFloat(s.conversionRatio) || 1;
+        const calcQty = Math.max(0, currentQtyPharmacyUnit);
+        const pbfQty = calcQty === 0 ? 1 : Math.ceil(calcQty / ratio);
+        
+        const baseDisc = parseFloat(s.discountPercent) || 0;
+        const tieredDisc = getCustomTieredDiscount(s, pbfQty);
+        const totalDisc = Math.min(100, baseDisc + tieredDisc);
+        const netPrice = s.price - (s.price * totalDisc / 100);
+        return { ...s, appliedDiscount: totalDisc, tieredApplied: tieredDisc, effectivePricePerPharmacyUnit: netPrice / ratio, pbfOrderQty: pbfQty };
+      }).sort((a, b) => {
+        const aStock = a.stock > 0;
+        const bStock = b.stock > 0;
+        if (aStock && !bStock) return -1;
+        if (!aStock && bStock) return 1;
+        return a.effectivePricePerPharmacyUnit - b.effectivePricePerPharmacyUnit;
+      });
+
+      document.getElementById('supplier-matrix').innerHTML = currentCalcSuppliers.map((s, idx) => {
+        const stockVal = s.stock !== undefined ? s.stock : 99;
+        const outOfStock = stockVal <= 0;
+        const isBest = idx === 0 && !outOfStock;
+        
+        const cardClass = outOfStock ? 'supplier-card empty' : (isBest ? 'supplier-card best' : 'supplier-card');
+        const badgeClass = outOfStock ? 'badge-danger' : (isBest ? 'badge-best' : 'badge-secondary');
+        const badgeText = outOfStock ? 'Stok PBF Habis' : (isBest ? 'Termurah / Terbaik' : 'Alternatif');
+
+        const stockBadge = stockVal <= 5 && stockVal > 0 ? 
+          `<span style="font-size:0.68rem; background:var(--neon-yellow); color:#000; padding:2px 6px; border-radius:4px; font-weight:800;">⚠️ Stok PBF Menipis: ${stockVal} ${s.pbfUnit}</span>` : 
+          `<span style="font-size:0.68rem; color:var(--muted);">📦 Stok di PBF: <strong>${stockVal} ${s.pbfUnit}</strong></span>`;
+
+        const ratioText = (s.conversionRatio && s.conversionRatio !== 1) ? `<span style="font-size:0.68rem; color:var(--neon-yellow);">💡 1 ${s.pbfUnit} = ${s.conversionRatio} ${selectedProduct.pharmacyUnit}</span><br>` : '';
+        
+        let discBadge = s.appliedDiscount > 0 ? `<span style="font-size:0.68rem; background:var(--neon-pink); color:#fff; padding:2px 4px; border-radius:4px; margin-left:4px;">Disc Total ${s.appliedDiscount}%</span>` : '';
+        if (s.tieredApplied > 0) {
+          discBadge += `<br><span style="font-size:0.65rem; color:var(--neon-green);">✨ Diskon Bertingkat Aktif (${s.tieredApplied}%)</span>`;
+        }
+
+        const bonusText = (s.bonusBuy && s.bonusGet) ? `<span style="font-size:0.68rem; color:var(--neon-cyan);">🎁 Promo: Beli ${s.bonusBuy} Gratis ${s.bonusGet}</span><br>` : '';
+        const sellP = selectedProduct.sellPrice || 0;
+        let marginHTML = '';
+        if (sellP > 0) {
+            const margin = ((sellP - s.effectivePricePerPharmacyUnit) / sellP * 100).toFixed(1);
+            let mColor = margin > 20 ? 'var(--neon-green)' : (margin > 10 ? 'var(--neon-yellow)' : 'var(--neon-pink)');
+            marginHTML = `<br><span style="font-size:0.75rem; color:var(--muted);">Margin: <strong style="color:${mColor}">${margin}%</strong></span>`;
+        }
+        
+        const btnHtml = outOfStock ? 
+            `<button class="btn btn-outline" style="margin-top:8px; border-color:var(--neon-pink); color:var(--neon-pink);" onclick="addSpecificPBFToCartByIndex(${idx})">⚠️ Tetap Order (Stok PBF 0)</button>` : 
+            `<button class="btn ${isBest ? 'btn-success' : 'btn-outline'}" style="margin-top:8px;" onclick="addSpecificPBFToCartByIndex(${idx})">+ Order Dari ${s.pbfName}</button>`;
+
+        return `<div class="${cardClass}">
+            <span class="badge ${badgeClass}">${badgeText}</span>
+            <div class="pbf-name-tag">${s.pbfName}</div>
+            <div style="margin-bottom:6px;">${stockBadge}</div>
+            <div class="mapping-box"><div class="pbf-item-title">🏷️ Versi PBF: <u>${s.pbfItemName}</u> (${s.pbfUnit})</div></div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <div style="font-size:0.78rem; color:var(--muted); ${s.appliedDiscount ? 'text-decoration:line-through;' : ''}">Harga PBF: Rp ${s.price.toLocaleString('id-ID')} / ${s.pbfUnit}</div>
+                <div style="font-size:0.88rem; color:var(--neon-green); font-weight:800;">Nett: Rp ${Math.round(s.effectivePricePerPharmacyUnit).toLocaleString('id-ID')} / ${selectedProduct.pharmacyUnit} ${discBadge}</div>
+                ${ratioText} ${bonusText} ${marginHTML}
+              </div>
+              <div style="text-align:right;"><span style="font-size:0.72rem; color:var(--muted);">Order Ke PBF:</span><br><strong style="color:var(--text); font-size:1rem;">${s.pbfOrderQty} ${s.pbfUnit}</strong></div>
+            </div>
+            ${btnHtml}
+          </div>`;
+      }).join('');
+    }
+
+    function checkAndAddToCart(idx, bypassDoubleCheck = false) {
+      if (!selectedProduct) return alert("Pilih produk terlebih dahulu!");
+      const chosenSup = currentCalcSuppliers[idx];
+      if (!chosenSup) return alert("Suplier tidak ditemukan!");
+
+      if (!bypassDoubleCheck) {
+        const targetDays = parseFloat(document.getElementById('target-days').value) || 20;
+        const recentOrders = orderHistory.filter(h => 
+          (h.prodId === selectedProduct.id || h.pharmacyName === selectedProduct.pharmacyName) && 
+          h.status !== 'CANCELED'
+        );
+
+        if (recentOrders.length > 0) {
+          recentOrders.sort((a,b) => new Date(b.submitDate) - new Date(a.submitDate));
+          const lastOrder = recentOrders[0];
+          const lastDate = new Date(lastOrder.submitDate);
+          const today = new Date();
+          const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+
+          let estDuration = targetDays;
+          if (selectedProduct.adc > 0 && lastOrder.qtyPharmacyUnit) {
+            estDuration = Math.round(lastOrder.qtyPharmacyUnit / selectedProduct.adc);
+          }
+
+          if (diffDays < estDuration) {
+            let msg = `⚠️ PERINGATAN DOUBLE ORDER!\n\nProduk "${selectedProduct.pharmacyName}" baru saja dipesan ${diffDays} hari lalu.\n\nApakah Anda ingin tetap memesannya?`;
+            if (!confirm(msg)) { return; }
+          }
+        }
+      }
+
+      let orderQtyPharmacy = Math.max(1, currentQtyPharmacyUnit);
+      let finalPricePerUnit = chosenSup.price * (1 - chosenSup.appliedDiscount / 100);
+      
+      draftPO.push({ 
+        id: Date.now() + Math.floor(Math.random()*100), 
+        prodId: selectedProduct.id, 
+        pharmacyName: selectedProduct.pharmacyName, 
+        pharmacyUnit: selectedProduct.pharmacyUnit, 
+        qtyPharmacyUnit: orderQtyPharmacy, 
+        chosenSupplier: { ...chosenSup, finalPricePerUnit: finalPricePerUnit } 
+      });
+
+      selectedProduct.lastStock = parseFloat(document.getElementById('current-stock').value) || 0;
+      selectedProduct.lastUpdate = new Date().toISOString();
+      syncToCloudBackground(); 
+      renderPO(); 
+      renderSmartAlerts();
+      alert(`Berhasil ditambah ke Draft PO: ${chosenSup.pbfOrderQty} ${chosenSup.pbfUnit} dari ${chosenSup.pbfName}`);
+    }
+
+    function addSpecificPBFToCartByIndex(idx) {
+      checkAndAddToCart(idx, false);
+    }
+    
+    function updateDraftQty(id, val) { 
+      const item = draftPO.find(i => i.id == id); 
+      if(item) { 
+        item.chosenSupplier.pbfOrderQty = parseInt(val) || 0; 
+        let newTier = getCustomTieredDiscount(item.chosenSupplier, item.chosenSupplier.pbfOrderQty);
+        let baseD = item.chosenSupplier.discountPercent || 0;
+        item.chosenSupplier.appliedDiscount = Math.min(100, baseD + newTier);
+        item.chosenSupplier.finalPricePerUnit = item.chosenSupplier.price * (1 - item.chosenSupplier.appliedDiscount / 100);
+        saveDataLocally();
+        renderPO();
+      } 
+    }
+    
+    function removeFromCart(id) { 
+      draftPO = draftPO.filter(item => item.id != id); 
+      saveDataLocally();
+      renderPO(); 
+    }
+
+    function renderPO() {
+      const container = document.getElementById('po-list');
+      if (!container) return;
+      if (draftPO.length === 0) { container.innerHTML = `<p style="color:var(--muted); font-size:0.82rem;">Draft PO kosong.</p>`; return; }
+      const grouped = {};
+      draftPO.forEach(item => { if (!grouped[item.chosenSupplier.pbfName]) grouped[item.chosenSupplier.pbfName] = []; grouped[item.chosenSupplier.pbfName].push(item); });
+      let html = '';
+      for (const pbf in grouped) {
+        let pbfSubtotal = 0;
+        grouped[pbf].forEach(i => pbfSubtotal += (i.chosenSupplier.pbfOrderQty * i.chosenSupplier.finalPricePerUnit));
+        
+        html += `<div class="po-group">
+          <div class="po-header">
+            <span>${pbf}</span>
+            <div style="text-align:right;">
+              <span style="font-size:0.78rem; color:var(--neon-green);">${grouped[pbf].length} Item</span><br>
+              <span style="color:var(--text); font-size:0.82rem;">Est. Rp ${Math.round(pbfSubtotal).toLocaleString('id-ID')}</span>
+            </div>
+          </div>`;
+          
+        html += grouped[pbf].map(item => `
+          <div class="po-line" style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="flex:1;">
+              <div style="color:var(--neon-green); font-weight:700; font-size:0.85rem;">${item.chosenSupplier.pbfItemName}</div>
+              <div style="font-size:0.72rem; color:var(--muted); margin-top:2px;">Sat: ${item.chosenSupplier.pbfUnit} | Disc: ${item.chosenSupplier.appliedDiscount}% | @ Rp ${Math.round(item.chosenSupplier.finalPricePerUnit).toLocaleString('id-ID')}</div>
+            </div>
+            <div style="display:flex; align-items:center;">
+              <input type="number" class="qty-input" value="${item.chosenSupplier.pbfOrderQty}" onchange="updateDraftQty(${item.id}, this.value)">
+              <button onclick="removeFromCart(${item.id})" style="background:none; border:none; color:var(--neon-pink); font-size:1.1rem; cursor:pointer; padding:0 4px;">🗑️</button>
+            </div>
+          </div>`).join('');
+        html += `</div>`;
+      }
+      container.innerHTML = html;
+    }
+
+    function generatePOText() {
+      if (draftPO.length === 0) return "";
+      const grouped = {}; 
+      draftPO.forEach(item => { if (!grouped[item.chosenSupplier.pbfName]) grouped[item.chosenSupplier.pbfName] = []; grouped[item.chosenSupplier.pbfName].push(item); });
+      let text = "";
+      for (const pbf in grouped) {
+        text += `*ORDER ${pbf.toUpperCase()} - GELORA MEDIKA*\n\n`;
+        grouped[pbf].forEach(item => { if(item.chosenSupplier.pbfOrderQty > 0) text += `${item.chosenSupplier.pbfOrderQty} ${item.chosenSupplier.pbfUnit} ${item.chosenSupplier.pbfItemName}\n`; });
+        text += `\n---\n\n`;
+      }
+      return text.trim();
+    }
+
+    function sendWhatsAppPO() {
+      const text = generatePOText(); if (!text) return alert("Draft PO kosong!");
+      window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+    }
+
+    function sendToKeep() {
+      const text = generatePOText(); if (!text) return alert("Draft PO kosong!");
+      window.open('https://keep.google.com/#b/NOTE/?title=' + encodeURIComponent('Draft PO Gelora Medika') + '&text=' + encodeURIComponent(text), '_blank');
+    }
+
+    function exportPODiffToExcel() {
+      if (draftPO.length === 0) return alert("Draft PO kosong!");
+      const data = draftPO.map((item, idx) => ({
+        "No": idx + 1,
+        "Nama Apotek": item.pharmacyName,
+        "PBF": item.chosenSupplier.pbfName,
+        "Nama Barang PBF": item.chosenSupplier.pbfItemName,
+        "Qty Order (PBF)": item.chosenSupplier.pbfOrderQty,
+        "Satuan PBF": item.chosenSupplier.pbfUnit,
+        "Harga Satuan": item.chosenSupplier.price,
+        "Diskon (%)": item.chosenSupplier.appliedDiscount,
+        "Nett per Unit": item.chosenSupplier.finalPricePerUnit,
+        "Total Estimasi (Rp)": Math.round(item.chosenSupplier.pbfOrderQty * item.chosenSupplier.finalPricePerUnit)
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Draft PO");
+      XLSX.writeFile(wb, "Draft_PO_Gelora_Medika.xlsx");
+    }
+
+    function submitPO() {
+      if (draftPO.length === 0) return alert("Tidak ada item di Draft PO!");
+      if (confirm("Kirim pesanan ke Riwayat Dashboard & Supabase?")) {
+        const timestamp = new Date().toISOString();
+        const d = new Date();
+        const dateStr = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+        
+        const grouped = {};
+        draftPO.forEach(item => { if (!grouped[item.chosenSupplier.pbfName]) grouped[item.chosenSupplier.pbfName] = []; grouped[item.chosenSupplier.pbfName].push(item); });
+        
+        for (const pbf in grouped) {
+           const poNum = "PO-" + dateStr + "-" + Math.floor(100 + Math.random()*900);
+           grouped[pbf].forEach(item => {
+             if(item.chosenSupplier.pbfOrderQty > 0) {
+                let finalP = item.chosenSupplier.price * (1 - item.chosenSupplier.appliedDiscount / 100);
+                orderHistory.push({
+                  id: 'HIST-' + Date.now() + '-' + Math.floor(Math.random()*1000), 
+                  poNumber: poNum, 
+                  fakturNumber: '',
+                  submitDate: timestamp, 
+                  prodId: item.prodId, 
+                  pharmacyName: item.pharmacyName, 
+                  qtyPharmacyUnit: item.qtyPharmacyUnit, 
+                  pbfName: item.chosenSupplier.pbfName, 
+                  pbfItemName: item.chosenSupplier.pbfItemName, 
+                  pbfOrderQty: item.chosenSupplier.pbfOrderQty, 
+                  pbfUnit: item.chosenSupplier.pbfUnit, 
+                  price: item.chosenSupplier.price, 
+                  totalRp: item.chosenSupplier.pbfOrderQty * finalP, 
+                  status: 'PENDING',
+                  paymentType: 'KREDIT', 
+                  invoiceDate: '', 
+                  dueDate: '', 
+                  paidAmount: 0, 
+                  paymentStatus: 'UNPAID'
+                });
+             }
+           });
+        }
+        syncToCloudBackground(); 
+        draftPO = []; 
+        renderPO(); 
+        switchTab('dashboard');
+      }
+    }
+
+    function processGenericUpload() {
+      const fileInput = document.getElementById('excel-file-input');
+      const pbfName = document.getElementById('sync-pbf-name').value;
+      const priceType = document.getElementById('sync-price-type').value;
+      const disc1 = parseFloat(document.getElementById('sync-disc1').value) || 0;
+      const disc2 = parseFloat(document.getElementById('sync-disc2').value) || 0;
+
+      if (!fileInput.files || fileInput.files.length === 0) return alert("Pilih file terlebih dahulu!");
+      const file = fileInput.files[0];
+
+      showLoading("MEMPROSES FILE...");
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const json = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+          let count = 0;
+          json.forEach(row => {
+            let name = row['Nama Barang'] || row['NAMA BARANG'] || row['Nama'] || row['Nama Obat'] || '';
+            let price = parseFloat(row['Harga'] || row['HARGA'] || row['HNA'] || 0) || 0;
+            let unit = row['Satuan'] || row['SATUAN'] || row['Kemasan'] || 'BOX';
+            let stock = parseInt(row['Stok'] || row['STOK'] || row['Stock'] || 99) || 99;
+
+            if (name && price > 0) {
+              updateOrAddProductFromPBF(pbfName, name.toString().trim(), price, unit.toString().trim(), stock, priceType, disc1, disc2);
+              count++;
+            }
+          });
+
+          syncToCloudBackground();
+          hideLoading();
+          alert(`Berhasil mengimpor/meng-update ${count} barang dari PBF ${pbfName}.`);
+          renderMappingTable();
+        } catch (err) {
+          hideLoading();
+          alert("Gagal membaca file: " + err.message);
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    function processTextPaste() {
+      const text = document.getElementById('paste-text-input').value.trim();
+      const pbfName = document.getElementById('sync-pbf-name').value;
+      if (!text) return alert("Tempelkan teks terlebih dahulu!");
+
+      const lines = text.split('\n');
+      let count = 0;
+
+      lines.forEach(line => {
+        line = line.trim();
+        if (!line) return;
+        const match = line.match(/(.+)\s+(\d+[\d\.,]*)$/);
+        if (match) {
+          let name = match[1].trim();
+          let price = parseFloat(match[2].replace(/\./g, '').replace(',', '.'));
+          if (name && price > 0) {
+            updateOrAddProductFromPBF(pbfName, name, price, 'BOX', 99, 'HPP', 0, 0);
+            count++;
+          }
+        }
+      });
+
+      syncToCloudBackground();
+      alert(`Berhasil mengimpor ${count} baris teks untuk PBF ${pbfName}.`);
+      renderMappingTable();
+    }
+
+    function updateOrAddProductFromPBF(pbfName, itemName, rawPrice, unit, stock, priceType, disc1, disc2) {
+      let netPrice = rawPrice;
+      if (priceType === 'HNA_DISC') {
+        let d1 = netPrice - (netPrice * disc1 / 100);
+        netPrice = d1 - (d1 * disc2 / 100);
+      }
+
+      let existing = productsDB.find(p => p.pharmacyName.toLowerCase() === itemName.toLowerCase());
+      if (!existing) {
+        existing = productsDB.find(p => p.suppliers.some(s => s.pbfItemName.toLowerCase() === itemName.toLowerCase()));
+      }
+
+      if (existing) {
+        let sup = existing.suppliers.find(s => s.pbfName === pbfName);
+        if (sup) {
+          sup.price = rawPrice;
+          sup.pbfItemName = itemName;
+          sup.pbfUnit = unit;
+          sup.stock = stock;
+          sup.discountPercent = (disc1 + disc2);
+        } else {
+          existing.suppliers.push({
+            pbfName: pbfName,
+            pbfItemName: itemName,
+            price: rawPrice,
+            pbfUnit: unit,
+            conversionRatio: 1,
+            discountPercent: (disc1 + disc2),
+            stock: stock
+          });
+        }
+      } else {
+        const newId = 'PROD-' + Date.now() + '-' + Math.floor(Math.random()*1000);
+        productsDB.push({
+          id: newId,
+          pharmacyName: itemName,
+          pharmacyUnit: unit,
+          sellPrice: Math.round(netPrice * 1.2),
+          adc: 0,
+          category: 'AUTO',
+          golongan: autoDetectGolongan(itemName),
+          lastStock: 0,
+          lastUpdate: new Date().toISOString(),
+          isDiscontinued: false,
+          suppliers: [{
+            pbfName: pbfName,
+            pbfItemName: itemName,
+            price: rawPrice,
+            pbfUnit: unit,
+            conversionRatio: 1,
+            discountPercent: (disc1 + disc2),
+            stock: stock
+          }]
+        });
+      }
+    }
+
+    function renderMappingTable() {
+      const tbody = document.querySelector('#mapping-table tbody');
+      if (!tbody) return;
+
+      const statusFilter = document.getElementById('filter-status-select').value;
+      const pbfFilter = document.getElementById('filter-pbf-select').value;
+      const searchQuery = document.getElementById('mapping-search-input').value.toLowerCase().trim();
+
+      let filtered = productsDB.filter(p => {
+        if (statusFilter === 'ACTIVE' && p.isDiscontinued) return false;
+        if (statusFilter === 'DISCONTINUED' && !p.isDiscontinued) return false;
+        if (pbfFilter !== 'ALL' && !p.suppliers.some(s => s.pbfName === pbfFilter)) return false;
+        if (searchQuery && !p.pharmacyName.toLowerCase().includes(searchQuery) && !p.id.toLowerCase().includes(searchQuery)) return false;
+        return true;
+      });
+
+      const totalPages = Math.ceil(filtered.length / itemsPerPage) || 1;
+      if (currentMappingPage > totalPages) currentMappingPage = totalPages;
+      if (currentMappingPage < 1) currentMappingPage = 1;
+
+      document.getElementById('mapping-page-info').innerText = `Hal ${currentMappingPage} / ${totalPages} (${filtered.length} Item)`;
+
+      const startIdx = (currentMappingPage - 1) * itemsPerPage;
+      const pageItems = filtered.slice(startIdx, startIdx + itemsPerPage);
+
+      if (pageItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--muted); padding:15px;">Data tidak ditemukan.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = pageItems.map((p, idx) => {
+        const cat = getCategoryInfo(p);
+        const suppliersHTML = p.suppliers.map(s => 
+          `<div style="font-size:0.75rem; margin-bottom:2px;">
+            <strong style="color:var(--neon-cyan);">${s.pbfName}:</strong> ${s.pbfItemName} (${s.pbfUnit}) - Rp ${(s.price || 0).toLocaleString('id-ID')} | Disc: ${s.discountPercent || 0}%
+          </div>`
+        ).join('') || `<span style="color:var(--muted); font-size:0.72rem;">Belum ada PBF</span>`;
+
+        const discBadge = p.isDiscontinued ? `<span class="badge status-discontinued">DISCONTINUE</span>` : `<span class="badge status-received">AKTIF</span>`;
+
+        return `<tr>
+          <td><input type="checkbox" class="prod-checkbox" value="${p.id}"></td>
+          <td>
+            <strong style="color:var(--text); font-size:0.85rem;">${p.pharmacyName}</strong> ${discBadge}<br>
+            <span style="font-size:0.72rem; color:var(--muted);">
+              Satuan: ${p.pharmacyUnit} | HJA: Rp ${(p.sellPrice || 0).toLocaleString('id-ID')} | ADC: ${p.adc}
+            </span><br>
+            <span class="badge ${cat.class}">${cat.label}</span>
+          </td>
+          <td>${suppliersHTML}</td>
+          <td>
+            <button class="btn btn-small btn-outline" onclick="openEditModal('${p.id}')">✏️ Edit</button>
+            <button class="btn btn-small btn-outline-danger" style="margin-top:2px;" onclick="toggleDiscontinue('${p.id}', ${!p.isDiscontinued})">${p.isDiscontinued ? 'Aktifkan' : 'Blokir'}</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function changeMappingPage(dir) {
+      currentMappingPage += dir;
+      renderMappingTable();
+    }
+
+    function toggleSelectAll(checkbox) {
+      document.querySelectorAll('.prod-checkbox').forEach(cb => cb.checked = checkbox.checked);
+    }
+
+    function toggleDiscontinue(id, status) {
+      const prod = productsDB.find(p => p.id === id);
+      if (prod) {
+        prod.isDiscontinued = status;
+        syncToCloudBackground();
+        renderMappingTable();
+        renderSmartAlerts();
+      }
+    }
+
+    function deleteSelectedProducts() {
+      const selected = Array.from(document.querySelectorAll('.prod-checkbox:checked')).map(cb => cb.value);
+      if (selected.length === 0) return alert("Pilih produk yang ingin dihapus!");
+      if (confirm(`Yakin ingin menghapus ${selected.length} produk pilihan?`)) {
+        productsDB = productsDB.filter(p => !selected.includes(p.id));
+        syncToCloudBackground();
+        renderMappingTable();
+        alert("Produk berhasil dihapus!");
+      }
+    }
+
+    function mergeSelectedProducts() {
+      const selected = Array.from(document.querySelectorAll('.prod-checkbox:checked')).map(cb => cb.value);
+      if (selected.length < 2) return alert("Pilih minimal 2 produk untuk digabungkan!");
+      
+      const mainId = selected[0];
+      const mainProd = productsDB.find(p => p.id === mainId);
+      if (!mainProd) return;
+
+      if (confirm(`Gabungkan ${selected.length - 1} produk lainnya ke dalam "${mainProd.pharmacyName}"?`)) {
+        for (let i = 1; i < selected.length; i++) {
+          const otherProd = productsDB.find(p => p.id === selected[i]);
+          if (otherProd) {
+            otherProd.suppliers.forEach(s => {
+              if (!mainProd.suppliers.some(ms => ms.pbfName === s.pbfName && ms.pbfItemName === s.pbfItemName)) {
+                mainProd.suppliers.push(s);
+              }
+            });
+          }
+        }
+        productsDB = productsDB.filter(p => !selected.slice(1).includes(p.id));
+        syncToCloudBackground();
+        renderMappingTable();
+        alert("Produk berhasil digabungkan!");
+      }
+    }
+
+    function exportMappingToExcel() {
+      const data = [];
+      productsDB.forEach(p => {
+        if (p.suppliers.length > 0) {
+          p.suppliers.forEach(s => {
+            data.push({
+              "ID Produk": p.id,
+              "Nama Apotek": p.pharmacyName,
+              "Satuan Apotek": p.pharmacyUnit,
+              "HJA": p.sellPrice,
+              "ADC": p.adc,
+              "PBF": s.pbfName,
+              "Nama Barang PBF": s.pbfItemName,
+              "Satuan PBF": s.pbfUnit,
+              "Harga PBF": s.price,
+              "Diskon (%)": s.discountPercent
+            });
+          });
+        } else {
+          data.push({
+            "ID Produk": p.id,
+            "Nama Apotek": p.pharmacyName,
+            "Satuan Apotek": p.pharmacyUnit,
+            "HJA": p.sellPrice,
+            "ADC": p.adc,
+            "PBF": "-",
+            "Nama Barang PBF": "-",
+            "Satuan PBF": "-",
+            "Harga PBF": 0,
+            "Diskon (%)": 0
+          });
+        }
+      });
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Database Produk");
+      XLSX.writeFile(wb, "Database_Apotek_Gelora_Medika.xlsx");
+    }
+
+    function openEditModal(id) {
+      const prod = productsDB.find(p => p.id === id);
+      if (!prod) return;
+
+      document.getElementById('modal-title').innerText = "Edit Produk & Nego Harga PBF";
+      document.getElementById('edit-prod-id').value = prod.id;
+      document.getElementById('edit-pharmacy-name').value = prod.pharmacyName || '';
+      document.getElementById('edit-pharmacy-unit').value = prod.pharmacyUnit || '';
+      document.getElementById('edit-sell-price').value = prod.sellPrice || 0;
+      document.getElementById('edit-adc').value = prod.adc || 0;
+      document.getElementById('edit-category').value = prod.category || 'AUTO';
+      document.getElementById('edit-golongan').value = prod.golongan || autoDetectGolongan(prod.pharmacyName);
+
+      editingSuppliers = JSON.parse(JSON.stringify(prod.suppliers || []));
+      renderEditSuppliersList();
+      document.getElementById('edit-modal').style.display = 'flex';
+    }
+
+    function openAddProductModal() {
+      document.getElementById('modal-title').innerText = "+ Tambah Produk Baru";
+      document.getElementById('edit-prod-id').value = '';
+      document.getElementById('edit-pharmacy-name').value = '';
+      document.getElementById('edit-pharmacy-unit').value = 'BOX';
+      document.getElementById('edit-sell-price').value = 0;
+      document.getElementById('edit-adc').value = 0;
+      document.getElementById('edit-category').value = 'AUTO';
+      document.getElementById('edit-golongan').value = 'OBAT BEBAS';
+
+      editingSuppliers = [];
+      renderEditSuppliersList();
+      document.getElementById('edit-modal').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+      document.getElementById('edit-modal').style.display = 'none';
+    }
+
+    function renderEditSuppliersList() {
+      const container = document.getElementById('edit-suppliers-list');
+      if (!container) return;
+
+      if (editingSuppliers.length === 0) {
+        container.innerHTML = `<p style="font-size:0.75rem; color:var(--muted);">Belum ada PBF terhubung.</p>`;
+        return;
+      }
+
+      container.innerHTML = editingSuppliers.map((sup, idx) => `
+        <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:8px; margin-bottom:8px; font-size:0.75rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <select style="width:65%; padding:4px;" onchange="editingSuppliers[${idx}].pbfName = this.value">
+              ${pbfList.map(p => `<option value="${p}" ${p === sup.pbfName ? 'selected' : ''}>${p}</option>`).join('')}
+            </select>
+            <button type="button" class="btn btn-small btn-outline-danger" onclick="removeSupplierFromEditing(${idx})">🗑️ Hapus</button>
+          </div>
+          <div class="grid-2" style="margin-bottom:4px;">
+            <input type="text" placeholder="Nama Barang di PBF" value="${sup.pbfItemName || ''}" oninput="editingSuppliers[${idx}].pbfItemName = this.value">
+            <input type="text" placeholder="Satuan PBF" value="${sup.pbfUnit || 'BOX'}" oninput="editingSuppliers[${idx}].pbfUnit = this.value">
+          </div>
+          <div class="grid-3" style="margin-bottom:4px;">
+            <input type="number" placeholder="Harga Rp" value="${sup.price || 0}" oninput="editingSuppliers[${idx}].price = parseFloat(this.value)||0">
+            <input type="number" step="0.1" placeholder="Rasio" value="${sup.conversionRatio || 1}" oninput="editingSuppliers[${idx}].conversionRatio = parseFloat(this.value)||1">
+            <input type="number" step="0.1" placeholder="Disc %" value="${sup.discountPercent || 0}" oninput="editingSuppliers[${idx}].discountPercent = parseFloat(this.value)||0">
+          </div>
+          <div style="border-top:1px dashed var(--border); padding-top:4px; font-size:0.7rem; color:var(--neon-yellow);">
+            Diskon Bertingkat Grosir:
+            <div class="grid-2" style="margin-top:2px;">
+              <input type="number" placeholder="Min. Qty" value="${sup.tier1Qty || ''}" oninput="editingSuppliers[${idx}].tier1Qty = parseInt(this.value)||0">
+              <input type="number" step="0.1" placeholder="Disc Grosir %" value="${sup.tier1Disc || ''}" oninput="editingSuppliers[${idx}].tier1Disc = parseFloat(this.value)||0">
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openAddSupplierForm() {
+      editingSuppliers.push({
+        pbfName: pbfList[0] || "PBF",
+        pbfItemName: document.getElementById('edit-pharmacy-name').value || "Barang",
+        price: 0,
+        pbfUnit: document.getElementById('edit-pharmacy-unit').value || "BOX",
+        conversionRatio: 1,
+        discountPercent: 0,
+        stock: 99
+      });
+      renderEditSuppliersList();
+    }
+
+    function removeSupplierFromEditing(idx) {
+      editingSuppliers.splice(idx, 1);
+      renderEditSuppliersList();
+    }
+
+    function saveProductEdit(e) {
+      e.preventDefault();
+      const id = document.getElementById('edit-prod-id').value;
+      const name = document.getElementById('edit-pharmacy-name').value.trim();
+      const unit = document.getElementById('edit-pharmacy-unit').value.trim();
+      const sellPrice = parseFloat(document.getElementById('edit-sell-price').value) || 0;
+      const adc = parseFloat(document.getElementById('edit-adc').value) || 0;
+      const category = document.getElementById('edit-category').value;
+      const golongan = document.getElementById('edit-golongan').value;
+
+      if (!name || !unit) return alert("Nama dan Satuan wajib diisi!");
+
+      if (id) {
+        const prod = productsDB.find(p => p.id === id);
+        if (prod) {
+          prod.pharmacyName = name;
+          prod.pharmacyUnit = unit;
+          prod.sellPrice = sellPrice;
+          prod.adc = adc;
+          prod.category = category;
+          prod.golongan = golongan;
+          prod.suppliers = editingSuppliers;
+        }
+      } else {
+        const newId = 'PROD-' + Date.now() + '-' + Math.floor(Math.random()*1000);
+        productsDB.push({
+          id: newId,
+          pharmacyName: name,
+          pharmacyUnit: unit,
+          sellPrice: sellPrice,
+          adc: adc,
+          category: category,
+          golongan: golongan,
+          lastStock: 0,
+          lastUpdate: new Date().toISOString(),
+          isDiscontinued: false,
+          suppliers: editingSuppliers
+        });
+      }
+
+      syncToCloudBackground();
+      closeEditModal();
+      renderMappingTable();
+      renderSmartAlerts();
+      alert("Data produk berhasil disimpan!");
+    }
+
+    // DASHBOARD & ANALITIK
+    function renderDashboardPbfFilter() {
+      const sel = document.getElementById('dash-filter-pbf');
+      if (sel) sel.innerHTML = `<option value="ALL">-- Tampilkan Semua PBF --</option>` + pbfList.map(p => `<option value="${p}">${p}</option>`).join('');
+    }
+
+    function renderDashboard() {
+      const startVal = document.getElementById('dash-start').value;
+      const endVal = document.getElementById('dash-end').value;
+      const pbfFilter = document.getElementById('dash-filter-pbf').value;
+
+      let filtered = orderHistory.filter(h => {
+        if (pbfFilter !== 'ALL' && h.pbfName !== pbfFilter) return false;
+        if (startVal && new Date(h.submitDate) < new Date(startVal)) return false;
+        if (endVal && new Date(h.submitDate) > new Date(endVal + 'T23:59:59')) return false;
+        return true;
+      });
+
+      filtered.sort((a, b) => new Date(b.submitDate) - new Date(a.submitDate));
+
+      let totalSpend = 0;
+      let totalItems = 0;
+      let totalTrx = filtered.length;
+
+      filtered.forEach(h => {
+        if (h.status === 'RECEIVED') totalSpend += (h.totalRp || 0);
+        totalItems += (h.pbfOrderQty || 0);
+      });
+
+      document.getElementById('ana-total-spend').innerText = `Rp ${Math.round(totalSpend).toLocaleString('id-ID')}`;
+      document.getElementById('ana-total-items').innerText = `${totalItems} Item`;
+      document.getElementById('ana-total-trx').innerText = `${totalTrx} Transaksi`;
+      document.getElementById('ana-avg-trx').innerText = `Rp ${totalTrx ? Math.round(totalSpend / totalTrx).toLocaleString('id-ID') : 0}`;
+
+      renderSpendChart(filtered);
+
+      const resultsContainer = document.getElementById('dashboard-results');
+      if (filtered.length === 0) {
+        resultsContainer.innerHTML = `<p style="font-size:0.8rem; color:var(--muted);">Tidak ada riwayat transaksi.</p>`;
+        return;
+      }
+
+      resultsContainer.innerHTML = filtered.map(h => {
+        let statusBadge = `<span class="badge status-pending">PENDING (MENUNGGU)</span>`;
+        if (h.status === 'RECEIVED') statusBadge = `<span class="badge status-received">TERIMA / LUNAS FAKTUR</span>`;
+        if (h.status === 'CANCELED') statusBadge = `<span class="badge status-canceled">BATAL</span>`;
+
+        const dateStr = new Date(h.submitDate).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+        return `<div class="po-group">
+          <div class="po-header">
+            <span>${h.poNumber || 'PO'} | ${h.pbfName}</span>
+            ${statusBadge}
+          </div>
+          <div style="font-size:0.85rem; font-weight:bold; color:var(--text);">${h.pbfItemName}</div>
+          <div style="font-size:0.75rem; color:var(--muted); margin-top:2px;">
+            Order: <strong>${h.pbfOrderQty} ${h.pbfUnit}</strong> | Total: <strong style="color:var(--neon-green);">Rp ${(h.totalRp || 0).toLocaleString('id-ID')}</strong><br>
+            Tanggal: ${dateStr} ${h.fakturNumber ? `| Faktur: ${h.fakturNumber}` : ''}
+          </div>
+          <div style="display:flex; gap:6px; margin-top:8px;">
+            ${h.status === 'PENDING' ? `<button class="btn btn-small btn-success" style="margin-top:0;" onclick="openReceiveModal('${h.id}')">✅ Terima Faktur</button>` : ''}
+            ${h.status === 'PENDING' ? `<button class="btn btn-small btn-outline-danger" style="margin-top:0;" onclick="cancelOrder('${h.id}')">🚫 Batal</button>` : ''}
+            <button class="btn btn-small btn-outline-danger" style="margin-top:0;" onclick="deleteHistoryItem('${h.id}')">🗑️ Hapus</button>
+          </div>
+        </div>`;
+      }).join('');
+
+      renderLeaderboard();
+      renderPriceComparison();
+    }
+
+    function renderSpendChart(filteredHistory) {
+      const ctx = document.getElementById('pbfSpendChart');
+      if (!ctx) return;
+
+      const pbfTotals = {};
+      filteredHistory.forEach(h => {
+        if (h.status === 'RECEIVED') {
+          pbfTotals[h.pbfName] = (pbfTotals[h.pbfName] || 0) + (h.totalRp || 0);
+        }
+      });
+
+      const labels = Object.keys(pbfTotals);
+      const data = Object.values(pbfTotals);
+
+      if (pbfChartInstance) pbfChartInstance.destroy();
+
+      pbfChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Total Belanja (Rp)',
+            data: data,
+            backgroundColor: 'rgba(0, 210, 255, 0.6)',
+            borderColor: '#00d2ff',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { ticks: { color: '#a0aec0', font: { size: 9 } } },
+            x: { ticks: { color: '#a0aec0', font: { size: 9 } } }
+          }
+        }
+      });
+    }
+
+    function cancelOrder(id) {
+      const h = orderHistory.find(item => item.id === id);
+      if (h && confirm("Membatalkan orderan ini?")) {
+        h.status = 'CANCELED';
+        syncToCloudBackground();
+        renderDashboard();
+      }
+    }
+
+    function deleteHistoryItem(id) {
+      if (confirm("Hapus item riwayat ini secara permanen?")) {
+        orderHistory = orderHistory.filter(item => item.id !== id);
+        syncToCloudBackground();
+        renderDashboard();
+      }
+    }
+
+    function exportHistoryToExcel() {
+      if (orderHistory.length === 0) return alert("Riwayat kosong!");
+      const data = orderHistory.map((h, idx) => ({
+        "No": idx + 1,
+        "No PO": h.poNumber,
+        "No Faktur": h.fakturNumber || '-',
+        "Tanggal Order": h.submitDate,
+        "Nama Apotek": h.pharmacyName,
+        "PBF": h.pbfName,
+        "Barang PBF": h.pbfItemName,
+        "Qty Order": h.pbfOrderQty,
+        "Satuan": h.pbfUnit,
+        "Total (Rp)": h.totalRp,
+        "Status Order": h.status,
+        "Status Pembayaran": h.paymentStatus || 'UNPAID'
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Riwayat Order");
+      XLSX.writeFile(wb, "Riwayat_Order_Gelora_Medika.xlsx");
+    }
+
+    function renderLeaderboard() {
+      const container = document.getElementById('pbf-leaderboard');
+      if (!container) return;
+
+      const pbfStats = {};
+      orderHistory.forEach(h => {
+        if (!pbfStats[h.pbfName]) pbfStats[h.pbfName] = { totalRp: 0, items: 0 };
+        if (h.status === 'RECEIVED') pbfStats[h.pbfName].totalRp += (h.totalRp || 0);
+        pbfStats[h.pbfName].items += (h.pbfOrderQty || 0);
+      });
+
+      const sorted = Object.entries(pbfStats).sort((a, b) => b[1].totalRp - a[1].totalRp).slice(0, 10);
+
+      if (sorted.length === 0) {
+        container.innerHTML = `<p style="color:var(--muted); font-size:0.78rem;">Belum ada data transaksi.</p>`;
+        return;
+      }
+
+      container.innerHTML = sorted.map(([pbf, stat], idx) => `
+        <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed var(--border);">
+          <span><strong>#${idx + 1} ${pbf}</strong> (${stat.items} Item)</span>
+          <strong style="color:var(--neon-green);">Rp ${Math.round(stat.totalRp).toLocaleString('id-ID')}</strong>
+        </div>
+      `).join('');
+    }
+
+    function renderPriceComparison() {
+      const container = document.getElementById('price-comparison-results');
+      const query = document.getElementById('price-comp-search').value.toLowerCase().trim();
+      if (!container) return;
+
+      if (!query) {
+        container.innerHTML = `<p style="color:var(--muted); font-size:0.78rem;">Ketik nama obat di kolom pencarian untuk membandingkan harga PBF.</p>`;
+        return;
+      }
+
+      const matches = productsDB.filter(p => p.pharmacyName.toLowerCase().includes(query)).slice(0, 5);
+      if (matches.length === 0) {
+        container.innerHTML = `<p style="color:var(--muted); font-size:0.78rem;">Obat tidak ditemukan.</p>`;
+        return;
+      }
+
+      container.innerHTML = matches.map(p => {
+        const sortedSuppliers = [...p.suppliers].sort((a, b) => a.price - b.price);
+        return `<div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:8px; margin-bottom:8px;">
+          <strong style="color:var(--neon-cyan); font-size:0.85rem;">${p.pharmacyName}</strong>
+          ${sortedSuppliers.map((s, i) => `
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-top:4px; ${i === 0 ? 'color:var(--neon-green); font-weight:bold;' : ''}">
+              <span>${s.pbfName} (${s.pbfItemName})</span>
+              <span>Rp ${(s.price || 0).toLocaleString('id-ID')} / ${s.pbfUnit} ${i === 0 ? '🏆 Termurah' : ''}</span>
+            </div>
+          `).join('')}
+        </div>`;
+      }).join('');
+    }
+
+    // MODAL CATAT SALES OFFLINE
+    function openOfflineOrderModal() {
+      document.getElementById('off-item-name').value = '';
+      document.getElementById('off-qty').value = 1;
+      document.getElementById('off-base-price').value = '';
+      document.getElementById('off-disc1').value = 0;
+      document.getElementById('off-disc2').value = 0;
+      document.getElementById('off-tier-qty').value = 0;
+      document.getElementById('off-tier-disc').value = 0;
+      document.getElementById('off-total-rp').value = '';
+      document.getElementById('off-faktur-num').value = '';
+      document.getElementById('off-inv-date').valueAsDate = new Date();
+
+      renderPBFSelectOptions();
+      toggleOfflineFields();
+      document.getElementById('offline-modal').style.display = 'flex';
+    }
+
+    function closeOfflineOrderModal() {
+      document.getElementById('offline-modal').style.display = 'none';
+    }
+
+    function searchOfflineProducts() {
+      const query = document.getElementById('off-item-name').value.toLowerCase().trim();
+      const res = document.getElementById('off-search-results');
+      if (query.length < 1) { res.style.display = 'none'; return; }
+
+      const matches = productsDB.filter(p => p.pharmacyName.toLowerCase().includes(query)).slice(0, 8);
+      if (matches.length === 0) { res.style.display = 'none'; return; }
+
+      res.innerHTML = matches.map(p => `
+        <div class="search-item" onclick="selectOfflineProduct('${p.id}')">
+          <div class="search-item-title">${p.pharmacyName}</div>
+          <div class="search-item-sub">Satuan: ${p.pharmacyUnit}</div>
+        </div>
+      `).join('');
+      res.style.display = 'block';
+    }
+
+    function selectOfflineProduct(id) {
+      const prod = productsDB.find(p => p.id === id);
+      if (prod) {
+        document.getElementById('off-item-name').value = prod.pharmacyName;
+        document.getElementById('off-unit').value = prod.pharmacyUnit;
+        const pbfName = document.getElementById('off-pbf-name').value;
+        const sup = prod.suppliers.find(s => s.pbfName === pbfName) || prod.suppliers[0];
+        if (sup) {
+          document.getElementById('off-base-price').value = sup.price || 0;
+          document.getElementById('off-disc1').value = sup.discountPercent || 0;
+        }
+        calcOfflineTotal();
+      }
+      document.getElementById('off-search-results').style.display = 'none';
+    }
+
+    function calcOfflineTotal() {
+      const qty = parseFloat(document.getElementById('off-qty').value) || 0;
+      const basePrice = parseFloat(document.getElementById('off-base-price').value) || 0;
+      const disc1 = parseFloat(document.getElementById('off-disc1').value) || 0;
+      const disc2 = parseFloat(document.getElementById('off-disc2').value) || 0;
+      const tierQty = parseFloat(document.getElementById('off-tier-qty').value) || 0;
+      const tierDisc = parseFloat(document.getElementById('off-tier-disc').value) || 0;
+
+      let netPrice = basePrice;
+      netPrice = netPrice - (netPrice * disc1 / 100);
+      netPrice = netPrice - (netPrice * disc2 / 100);
+
+      if (tierQty > 0 && qty >= tierQty) {
+        netPrice = netPrice - (netPrice * tierDisc / 100);
+      }
+
+      document.getElementById('off-total-rp').value = Math.round(qty * netPrice);
+    }
+
+    function toggleOfflineFields() {
+      const status = document.getElementById('off-entry-status').value;
+      document.getElementById('offline-rec-fields').style.display = status === 'RECEIVED' ? 'block' : 'none';
+    }
+
+    function saveOfflineOrder(e) {
+      e.preventDefault();
+      const pbfName = document.getElementById('off-pbf-name').value;
+      const itemName = document.getElementById('off-item-name').value.trim();
+      const qty = parseFloat(document.getElementById('off-qty').value) || 1;
+      const unit = document.getElementById('off-unit').value.trim();
+      const basePrice = parseFloat(document.getElementById('off-base-price').value) || 0;
+      const totalRp = parseFloat(document.getElementById('off-total-rp').value) || 0;
+      const status = document.getElementById('off-entry-status').value;
+
+      const fakturNum = document.getElementById('off-faktur-num').value.trim();
+      const payType = document.getElementById('off-pay-type').value;
+      const invDate = document.getElementById('off-inv-date').value;
+      const topInput = document.getElementById('off-top-input').value.trim();
+
+      let calculatedDueDate = '';
+      if (status === 'RECEIVED' && invDate) {
+        if (/^\d+$/.test(topInput)) {
+          const d = new Date(invDate);
+          d.setDate(d.getDate() + parseInt(topInput));
+          calculatedDueDate = d.toISOString().split('T')[0];
+        } else {
+          calculatedDueDate = topInput;
+        }
+      }
+
+      const poNum = "OFF-" + Date.now().toString().slice(-6);
+
+      orderHistory.push({
+        id: 'HIST-' + Date.now() + '-' + Math.floor(Math.random()*1000),
+        poNumber: poNum,
+        fakturNumber: fakturNum,
+        submitDate: new Date().toISOString(),
+        prodId: '',
+        pharmacyName: itemName,
+        qtyPharmacyUnit: qty,
+        pbfName: pbfName,
+        pbfItemName: itemName,
+        pbfOrderQty: qty,
+        pbfUnit: unit,
+        price: basePrice,
+        totalRp: totalRp,
+        status: status,
+        paymentType: payType,
+        invoiceDate: invDate,
+        dueDate: calculatedDueDate,
+        paidAmount: payType === 'COD' ? totalRp : 0,
+        paymentStatus: payType === 'COD' ? 'PAID' : 'UNPAID'
+      });
+
+      syncToCloudBackground();
+      closeOfflineOrderModal();
+      renderDashboard();
+      alert("Order offline berhasil dicatat!");
+    }
+
+    // MODAL RECEIVE ORDER
+    function openReceiveModal(histId) {
+      currentReceiveId = histId;
+      const h = orderHistory.find(item => item.id === histId);
+      if (!h) return;
+
+      document.getElementById('rec-title').innerText = `Terima Faktur: ${h.pbfName} - ${h.pbfItemName}`;
+      document.getElementById('rec-faktur').value = h.fakturNumber || '';
+      document.getElementById('rec-qty').value = h.pbfOrderQty || 1;
+      document.getElementById('rec-price').value = h.price || 0;
+      document.getElementById('rec-disc').value = 0;
+      document.getElementById('rec-inv-date').valueAsDate = new Date();
+      document.getElementById('rec-top-input').value = '30';
+      document.getElementById('rec-ppn-check').checked = false;
+
+      calcReceiveTotal();
+      document.getElementById('receive-modal').style.display = 'flex';
+    }
+
+    function closeReceiveModal() {
+      document.getElementById('receive-modal').style.display = 'none';
+    }
+
+    function calcReceiveTotal() {
+      const qty = parseFloat(document.getElementById('rec-qty').value) || 0;
+      const price = parseFloat(document.getElementById('rec-price').value) || 0;
+      const disc = parseFloat(document.getElementById('rec-disc').value) || 0;
+      const addPPN = document.getElementById('rec-ppn-check').checked;
+      const ppnVal = parseFloat(document.getElementById('rec-ppn-val').value) || 11;
+
+      let subtotal = qty * (price - (price * disc / 100));
+      if (addPPN) subtotal += (subtotal * ppnVal / 100);
+
+      document.getElementById('rec-total').value = Math.round(subtotal);
+    }
+
+    function saveReceiveOrder(e) {
+      e.preventDefault();
+      const h = orderHistory.find(item => item.id === currentReceiveId);
+      if (!h) return;
+
+      const faktur = document.getElementById('rec-faktur').value.trim();
+      const qty = parseFloat(document.getElementById('rec-qty').value) || h.pbfOrderQty;
+      const payType = document.getElementById('rec-pay-type').value;
+      const price = parseFloat(document.getElementById('rec-price').value) || h.price;
+      const total = parseFloat(document.getElementById('rec-total').value) || h.totalRp;
+      const invDate = document.getElementById('rec-inv-date').value;
+      const topInput = document.getElementById('rec-top-input').value.trim();
+
+      let calculatedDueDate = '';
+      if (invDate) {
+        if (/^\d+$/.test(topInput)) {
+          const d = new Date(invDate);
+          d.setDate(d.getDate() + parseInt(topInput));
+          calculatedDueDate = d.toISOString().split('T')[0];
+        } else {
+          calculatedDueDate = topInput;
+        }
+      }
+
+      h.fakturNumber = faktur;
+      h.pbfOrderQty = qty;
+      h.paymentType = payType;
+      h.price = price;
+      h.totalRp = total;
+      h.invoiceDate = invDate;
+      h.dueDate = calculatedDueDate;
+      h.status = 'RECEIVED';
+      h.paymentStatus = payType === 'COD' ? 'PAID' : 'UNPAID';
+      h.paidAmount = payType === 'COD' ? total : 0;
+
+      syncToCloudBackground();
+      closeReceiveModal();
+      renderDashboard();
+      alert("Faktur penerimaan berhasil disimpan!");
+    }
+
+    // TAB KEUANGAN & HUTANG DAGANG
+    function switchSubFinance(subId) {
+      document.querySelectorAll('#tab-invoices .subnav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#tab-invoices .sub-section').forEach(s => s.classList.remove('active'));
+
+      const targetBtn = Array.from(document.querySelectorAll('#tab-invoices .subnav-btn')).find(b => b.getAttribute('onclick').includes(subId));
+      if (targetBtn) targetBtn.classList.add('active');
+
+      const targetSec = document.getElementById('sub-fin-' + subId);
+      if (targetSec) targetSec.classList.add('active');
+
+      if (subId === 'analitik') renderDebtChart();
+    }
+
+    function renderInvoiceFilterPbf() {
+      const sel = document.getElementById('invoice-filter-pbf');
+      if (sel) sel.innerHTML = `<option value="ALL">-- Semua PBF --</option>` + pbfList.map(p => `<option value="${p}">${p}</option>`).join('');
+    }
+
+    function renderInvoiceTab() {
+      const pbfFilter = document.getElementById('invoice-filter-pbf').value;
+      const container = document.getElementById('invoice-results-container');
+      const activeDebtContainer = document.getElementById('active-debt-container');
+
+      let receivedOrders = orderHistory.filter(h => h.status === 'RECEIVED');
+      if (pbfFilter !== 'ALL') {
+        receivedOrders = receivedOrders.filter(h => h.pbfName === pbfFilter);
+      }
+
+      let totalInv = 0;
+      let totalDebt = 0;
+
+      receivedOrders.forEach(h => {
+        totalInv += (h.totalRp || 0);
+        totalDebt += Math.max(0, (h.totalRp || 0) - (h.paidAmount || 0));
+      });
+
+      document.getElementById('inv-total-rp').innerText = `Rp ${Math.round(totalInv).toLocaleString('id-ID')}`;
+      document.getElementById('inv-total-debt').innerText = `Rp ${Math.round(totalDebt).toLocaleString('id-ID')}`;
+
+      if (receivedOrders.length === 0) {
+        container.innerHTML = `<p style="color:var(--muted); font-size:0.8rem;">Tidak ada tagihan faktur.</p>`;
+        if (activeDebtContainer) activeDebtContainer.innerHTML = `<p style="color:var(--muted); font-size:0.8rem;">Tidak ada hutang aktif.</p>`;
+        return;
+      }
+
+      const today = new Date();
+
+      container.innerHTML = receivedOrders.map(h => {
+        const remaining = Math.max(0, (h.totalRp || 0) - (h.paidAmount || 0));
+        const due = h.dueDate ? new Date(h.dueDate) : null;
+        const diffDays = due ? Math.ceil((due - today) / (1000 * 60 * 60 * 24)) : 999;
+
+        let statusClass = 'status-paid';
+        let statusText = 'LUNAS';
+
+        if (remaining > 0) {
+          if (h.paidAmount > 0) { statusClass = 'status-partial'; statusText = 'SEBAGIAN'; } 
+          else { statusClass = 'status-unpaid'; statusText = 'BELUM BAYAR'; }
+        }
+
+        let dueColor = 'var(--text)';
+        if (remaining > 0 && due) {
+          if (diffDays < 0) dueColor = 'var(--neon-pink)';
+          else if (diffDays <= 7) dueColor = 'var(--neon-yellow)';
+        }
+
+        return `<div class="po-group">
+          <div class="po-header">
+            <span>${h.pbfName} | Faktur: ${h.fakturNumber || 'N/A'}</span>
+            <span class="badge ${statusClass}">${statusText}</span>
+          </div>
+          <div style="font-size:0.82rem; color:var(--text);">${h.pbfItemName} (${h.pbfOrderQty} ${h.pbfUnit})</div>
+          <div style="font-size:0.75rem; color:var(--muted); margin-top:4px;">
+            Total Tagihan: <strong>Rp ${(h.totalRp || 0).toLocaleString('id-ID')}</strong> | Dibayar: <strong style="color:var(--neon-green);">Rp ${(h.paidAmount || 0).toLocaleString('id-ID')}</strong><br>
+            Sisa Hutang: <strong style="color:var(--neon-pink);">Rp ${remaining.toLocaleString('id-ID')}</strong><br>
+            Jatuh Tempo: <span style="color:${dueColor}; font-weight:bold;">${h.dueDate || 'N/A'} (${diffDays < 0 ? 'OVERDUE' : diffDays + ' hari lagi'})</span>
+          </div>
+          ${remaining > 0 ? `<button class="btn btn-small btn-success" style="margin-top:8px;" onclick="openPaymentModal('${h.id}')">💳 Bayar Faktur Ini</button>` : ''}
+        </div>`;
+      }).join('');
+
+      const activeDebts = receivedOrders.filter(h => Math.max(0, (h.totalRp || 0) - (h.paidAmount || 0)) > 0);
+      if (activeDebtContainer) {
+        if (activeDebts.length === 0) {
+          activeDebtContainer.innerHTML = `<p style="color:var(--neon-green); font-size:0.8rem;">🎉 Semua tagihan faktur telah LUNAS!</p>`;
+        } else {
+          activeDebtContainer.innerHTML = activeDebts.map(h => {
+            const remaining = (h.totalRp || 0) - (h.paidAmount || 0);
+            return `<div class="po-group" style="border-color:var(--neon-pink);">
+              <div class="po-header"><span style="color:var(--neon-pink);">${h.pbfName} - ${h.fakturNumber}</span><span>Sisa: Rp ${remaining.toLocaleString('id-ID')}</span></div>
+              <div style="font-size:0.75rem;">Barang: ${h.pbfItemName} | Due: ${h.dueDate || 'N/A'}</div>
+              <button class="btn btn-small btn-success" style="margin-top:6px;" onclick="openPaymentModal('${h.id}')">💳 Bayar</button>
+            </div>`;
+          }).join('');
+        }
+      }
+    }
+
+    function renderDebtChart() {
+      const ctx = document.getElementById('debtChart');
+      if (!ctx) return;
+
+      const pbfPaid = {};
+      const pbfDebt = {};
+
+      orderHistory.forEach(h => {
+        if (h.status === 'RECEIVED') {
+          const paid = h.paidAmount || 0;
+          const remaining = Math.max(0, (h.totalRp || 0) - paid);
+
+          pbfPaid[h.pbfName] = (pbfPaid[h.pbfName] || 0) + paid;
+          pbfDebt[h.pbfName] = (pbfDebt[h.pbfName] || 0) + remaining;
+        }
+      });
+
+      const labels = Object.keys({ ...pbfPaid, ...pbfDebt });
+      const dataPaid = labels.map(l => pbfPaid[l] || 0);
+      const dataDebt = labels.map(l => pbfDebt[l] || 0);
+
+      if (debtChartInstance) debtChartInstance.destroy();
+
+      debtChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Lunas (Rp)', data: dataPaid, backgroundColor: 'rgba(0, 230, 118, 0.6)' },
+            { label: 'Sisa Hutang (Rp)', data: dataDebt, backgroundColor: 'rgba(255, 51, 102, 0.6)' }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#f8fafc', font: { size: 10 } } } },
+          scales: {
+            y: { ticks: { color: '#a0aec0', font: { size: 9 } } },
+            x: { ticks: { color: '#a0aec0', font: { size: 9 } } }
+          }
+        }
+      });
+    }
+
+    // PAYMENT MODAL
+    let currentPaymentHistId = null;
+
+    function openPaymentModal(histId) {
+      currentPaymentHistId = histId;
+      const h = orderHistory.find(item => item.id === histId);
+      if (!h) return;
+
+      const remaining = Math.max(0, (h.totalRp || 0) - (h.paidAmount || 0));
+
+      document.getElementById('pay-faktur-num-target').value = histId;
+      document.getElementById('pay-faktur-display').value = `${h.pbfName} - ${h.fakturNumber || 'Faktur'}`;
+      document.getElementById('pay-total-display').value = `Rp ${(h.totalRp || 0).toLocaleString('id-ID')}`;
+      document.getElementById('pay-sisa-display').value = `Rp ${remaining.toLocaleString('id-ID')}`;
+      document.getElementById('pay-nominal-input').value = remaining;
+
+      document.getElementById('payment-modal').style.display = 'flex';
+    }
+
+    function closePaymentModal() {
+      document.getElementById('payment-modal').style.display = 'none';
+    }
+
+    function savePaymentAction(e) {
+      e.preventDefault();
+      const h = orderHistory.find(item => item.id === currentPaymentHistId);
+      if (!h) return;
+
+      const payAmt = parseFloat(document.getElementById('pay-nominal-input').value) || 0;
+      h.paidAmount = (h.paidAmount || 0) + payAmt;
+
+      if (h.paidAmount >= h.totalRp) {
+        h.paymentStatus = 'PAID';
+      } else {
+        h.paymentStatus = 'PARTIAL';
+      }
+
+      syncToCloudBackground();
+      closePaymentModal();
+      renderInvoiceTab();
+      alert("Pembayaran berhasil dicatat!");
+    }
+
+    // TAB FAKTUR SUMMARY & ARSIP
+    function renderSummaryFilterPbf() {
+      const sel = document.getElementById('summary-filter-pbf');
+      if (sel) sel.innerHTML = `<option value="ALL">-- Semua PBF --</option>` + pbfList.map(p => `<option value="${p}">${p}</option>`).join('');
+    }
+
+    function renderSummaryInvTab() {
+      const pbfFilter = document.getElementById('summary-filter-pbf').value;
+      const container = document.getElementById('summary-invoice-results-container');
+
+      let receivedOrders = orderHistory.filter(h => h.status === 'RECEIVED');
+      if (pbfFilter !== 'ALL') {
+        receivedOrders = receivedOrders.filter(h => h.pbfName === pbfFilter);
+      }
+
+      if (receivedOrders.length === 0) {
+        container.innerHTML = `<p style="color:var(--muted); font-size:0.8rem;">Arsip barang masuk kosong.</p>`;
+        return;
+      }
+
+      const groupedFaktur = {};
+      receivedOrders.forEach(h => {
+        const key = (h.fakturNumber || 'TANPA-FAKTUR') + '_' + h.pbfName;
+        if (!groupedFaktur[key]) groupedFaktur[key] = { faktur: h.fakturNumber || 'TANPA FAKTUR', pbf: h.pbfName, date: h.invoiceDate || h.submitDate, items: [] };
+        groupedFaktur[key].items.push(h);
+      });
+
+      container.innerHTML = Object.values(groupedFaktur).map(g => {
+        let totalFaktur = 0;
+        g.items.forEach(i => totalFaktur += (i.totalRp || 0));
+
+        return `<div class="po-group">
+          <div class="po-header">
+            <span>🧾 ${g.pbf} - ${g.faktur}</span>
+            <span style="color:var(--neon-green);">Total: Rp ${Math.round(totalFaktur).toLocaleString('id-ID')}</span>
+          </div>
+          <div style="font-size:0.72rem; color:var(--muted); margin-bottom:6px;">Tanggal: ${g.date || 'N/A'}</div>
+          ${g.items.map(item => `
+            <div style="font-size:0.78rem; padding:4px 0; border-top:1px dashed var(--border); display:flex; justify-content:space-between;">
+              <span>• ${item.pbfItemName} (${item.pbfOrderQty}${item.pbfUnit})</span>
+              <span>Rp ${(item.totalRp || 0).toLocaleString('id-ID')}</span>
+            </div>
+          `).join('')}
+        </div>`;
+      }).join('');
+    }
+
+    // MODAL TAMBAH BARANG MANUAL
+    function openManualReceiveModal() {
+      renderPBFSelectOptions();
+      document.getElementById('man-item-name').value = '';
+      document.getElementById('man-faktur').value = '';
+      document.getElementById('man-qty').value = 1;
+      document.getElementById('man-unit').value = 'BOX';
+      document.getElementById('man-price').value = '';
+      document.getElementById('man-disc1').value = 0;
+      document.getElementById('man-disc2').value = 0;
+      document.getElementById('man-tier-qty').value = 0;
+      document.getElementById('man-tier-disc').value = 0;
+      document.getElementById('man-inv-date').valueAsDate = new Date();
+      document.getElementById('man-top').value = '30';
+      document.getElementById('man-total').value = '';
+
+      document.getElementById('manual-receive-modal').style.display = 'flex';
+    }
+
+    function closeManualReceiveModal() {
+      document.getElementById('manual-receive-modal').style.display = 'none';
+    }
+
+    function calcManTotal() {
+      const qty = parseFloat(document.getElementById('man-qty').value) || 0;
+      const price = parseFloat(document.getElementById('man-price').value) || 0;
+      const disc1 = parseFloat(document.getElementById('man-disc1').value) || 0;
+      const disc2 = parseFloat(document.getElementById('man-disc2').value) || 0;
+      const tierQty = parseFloat(document.getElementById('man-tier-qty').value) || 0;
+      const tierDisc = parseFloat(document.getElementById('man-tier-disc').value) || 0;
+
+      let netPrice = price;
+      netPrice = netPrice - (netPrice * disc1 / 100);
+      netPrice = netPrice - (netPrice * disc2 / 100);
+
+      if (tierQty > 0 && qty >= tierQty) {
+        netPrice = netPrice - (netPrice * tierDisc / 100);
+      }
+
+      document.getElementById('man-total').value = Math.round(qty * netPrice);
+    }
+
+    function saveManualReceiveOrder(e) {
+      e.preventDefault();
+      const pbfName = document.getElementById('man-pbf-name').value;
+      const itemName = document.getElementById('man-item-name').value.trim();
+      const faktur = document.getElementById('man-faktur').value.trim();
+      const qty = parseFloat(document.getElementById('man-qty').value) || 1;
+      const unit = document.getElementById('man-unit').value.trim();
+      const price = parseFloat(document.getElementById('man-price').value) || 0;
+      const payType = document.getElementById('man-pay-type').value;
+      const invDate = document.getElementById('man-inv-date').value;
+      const topInput = document.getElementById('man-top').value.trim();
+      const total = parseFloat(document.getElementById('man-total').value) || 0;
+
+      let calculatedDueDate = '';
+      if (invDate) {
+        if (/^\d+$/.test(topInput)) {
+          const d = new Date(invDate);
+          d.setDate(d.getDate() + parseInt(topInput));
+          calculatedDueDate = d.toISOString().split('T')[0];
+        } else {
+          calculatedDueDate = topInput;
+        }
+      }
+
+      orderHistory.push({
+        id: 'HIST-' + Date.now() + '-' + Math.floor(Math.random()*1000),
+        poNumber: 'MANUAL-' + Date.now().toString().slice(-6),
+        fakturNumber: faktur,
+        submitDate: new Date().toISOString(),
+        prodId: '',
+        pharmacyName: itemName,
+        qtyPharmacyUnit: qty,
+        pbfName: pbfName,
+        pbfItemName: itemName,
+        pbfOrderQty: qty,
+        pbfUnit: unit,
+        price: price,
+        totalRp: total,
+        status: 'RECEIVED',
+        paymentType: payType,
+        invoiceDate: invDate,
+        dueDate: calculatedDueDate,
+        paidAmount: payType === 'COD' ? total : 0,
+        paymentStatus: payType === 'COD' ? 'PAID' : 'UNPAID'
+      });
+
+      syncToCloudBackground();
+      closeManualReceiveModal();
+      renderSummaryInvTab();
+      alert("Barang manual berhasil ditambahkan!");
+    }
+
+    // JALANKAN APLIKASI
+    window.addEventListener('DOMContentLoaded', () => {
+      initSystem();
+    });
+  </script>
+</body>
+</html>
